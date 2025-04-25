@@ -34,7 +34,7 @@ Este sistema é um web scraper especializado que organiza informações já púb
 
 ## Cidades e Portais Suportados
 
-O sistema atualmente suporta os seguintes municípios e órgãos:
+OO sistema atualmente suporta os municípios e órgãos que usam o Portal da Transparência da Digitaliza (https://www.digitaliza.com.br). Veja a lista abaixo:
 
 ### Machacalis
 - Prefeitura Municipal de Machacalis
@@ -64,7 +64,7 @@ Para adicionar uma nova cidade ou órgão, basta incluir suas informações no a
 ```
 
 ## Requisitos
-- Python 3.8 ou superior
+- Python 3.12
 - Dependências listadas em `requirements.txt`
 
 ## Instalação
