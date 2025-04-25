@@ -43,10 +43,10 @@ OO sistema atualmente suporta os municípios e órgãos que usam o Portal da Tra
 - Prefeitura Municipal de Bertópolis
 - Câmara Municipal de Bertópolis
 
-### Fronteira dos Vales
-- Câmara Municipal de Fronteira dos Vales
+### Umburatiba
+- Prefeitura Municipal de Umburatiba
 
-O arquivo `cidades.json` mantém o mapeamento entre cidades, órgãos e seus respectivos portais de transparência. Esta estrutura permite:
+O arquivo `cidades.json` (em src/resources) mantém o mapeamento entre cidades, órgãos e seus respectivos portais de transparência. Esta estrutura permite:
 
 - Organização hierárquica cidade -> órgão -> URL
 - Fácil adição de novos portais

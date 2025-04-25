@@ -7,7 +7,8 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('cidades.json', '.'),
+        ('cidades.json', 'resources'),
+        ('resources/icon.ico', 'resources')
         ('src', 'src'),
         ('relatorios', 'relatorios')
     ],
@@ -44,5 +45,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='src/resources/icon.ico'
+    icon='resources/icon.ico'
 ) 

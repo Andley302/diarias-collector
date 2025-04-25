@@ -3,9 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 import unicodedata
 import os
-from datetime import datetime
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
+
+def resource_path(relative_path):
+    """ Obtém o caminho absoluto para o recurso, funcionando tanto para desenvolvimento quanto para executável compilado. """
+    return os.path.join(os.path.abspath("."), relative_path)
 
 class DiariasCollector:
     def __init__(self, callback=None):
@@ -29,8 +31,7 @@ class DiariasCollector:
     def carregar_cidades_orgaos(self):
         """Carrega as cidades e órgãos do arquivo JSON."""
         try:
-            script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            json_path = os.path.join(script_dir, 'cidades.json')
+            json_path =  resource_path('resources/cidades.json')
             with open(json_path, 'r', encoding='utf-8') as file:
                 return json.load(file)
         except Exception as e:
@@ -277,8 +278,10 @@ class DiariasCollector:
         periodo = f"{ano_inicio} a {ano_fim}" if ano_inicio != ano_fim else str(ano_inicio)
         
         if valor_total > 0:
-           mensagem_final = f"[green]O credor {primeiro_credor} somou um total de R$ {valor_total:.2f} em diárias no período de {periodo}.[/green]"
-           self.atualizar_progresso(mensagem_final)
+           self.atualizar_progresso(
+                f"[green]O credor {primeiro_credor} somou um total de R$ {valor_total:.2f} em diárias no período de {periodo}.[/green]"
+           )
+
            return True, "", dados_empenhos, valor_total 
         else:
             mensagem_final = f"Nenhum valor encontrado para o credor '{primeiro_credor}' no período de {periodo}."
