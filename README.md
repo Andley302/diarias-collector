@@ -1,3 +1,7 @@
+# Diárias Collector 🔍
+
+Um web scraper especializado para organizar informações sobre subsídios de viagem públicas de pessoas nos portais de transparência.
+
 ## Sobre o Projeto
 
 Este sistema é um web scraper especializado que organiza informações já públicas de diárias de viagem disponíveis nos portais de transparência. Embora esses dados sejam públicos, as plataformas oficiais nem sempre oferecem ferramentas adequadas para filtrar e organizar as informações por servidor/beneficiário.
