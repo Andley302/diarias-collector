@@ -133,7 +133,7 @@ diarias-collector/
 │   ├── core/
 │   ├── ui/
 │   └── utils/
-├── relatorios/
+├── resources
 ├── requirements.txt
 └── README.md
 ```
