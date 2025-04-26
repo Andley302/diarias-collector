@@ -62,6 +62,43 @@ Para adicionar uma nova cidade ou órgão, basta incluir suas informações no a
     }
 }
 ```
+## 🖥️ Execução via Interface Gráfica
+
+### 🪟 Windows
+1. Acesse a aba **[Releases](https://github.com/Andley302/diarias-collector/releases)** do repositório.
+2. Baixe o arquivo `DiariasCollector_Windows_x86_64.zip`.
+3. Extraia o conteúdo do `.zip`.
+4. Abra a pasta extraída e dê **dois cliques** em `DiariasCollector.exe` para iniciar o programa.
+
+### 🐧 Linux
+1. Acesse a aba **[Releases](https://github.com/Andley302/diarias-collector/releases)** do repositório.
+2. Baixe o arquivo `DiariasCollector_Linux_x86_64.zip`.
+3. Extraia o conteúdo do `.zip`.
+4. Abra a pasta extraída, clique com o botão direito no arquivo `DiariasCollector`, vá em **Propriedades > Permissões** e marque **"Permitir execução como programa"** (se necessário).
+5. Dê **dois cliques** no arquivo para executá-lo.
+
+## 💻 Execução via Terminal
+
+### 🪟 Windows
+```bash
+cd DiariasCollector
+DiariasCollector.exe
+```
+
+### 🐧 Linux
+```bash
+cd DiariasCollector
+chmod +x DiariasCollector
+./DiariasCollector
+```
+
+**Observações:**
+- No Windows: Execute diretamente após entrar na pasta extraída
+- No Linux: Necessário dar permissão de execução apenas na primeira vez
+- O terminal deve estar no diretório onde o arquivo foi extraído
+
+
+## Compilação
 
 ## Requisitos
 - Python 3.12
