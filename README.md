@@ -82,14 +82,14 @@ Para adicionar uma nova cidade ou órgão, basta incluir suas informações no a
 ### 🪟 Windows
 ```bash
 cd DiariasCollector
-DiariasCollector.exe
+DiariasCollector.exe --terminal
 ```
 
 ### 🐧 Linux
 ```bash
 cd DiariasCollector
 chmod +x DiariasCollector
-./DiariasCollector
+./DiariasCollector --terminal
 ```
 
 **Observações:**
