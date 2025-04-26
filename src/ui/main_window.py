@@ -13,7 +13,7 @@ from rich.logging import RichHandler
 import logging
 
 exibir_detalhes_log = False
-versao_software = "1.0.0" 
+versao_software = "1.0.1" 
 
 console = Console()
 logging.basicConfig(
@@ -233,7 +233,6 @@ class SearchScreen(QWidget):
                     "Erro ao carregar dados",
                     "Não foi possível carregar a lista de cidades e órgãos. Verifique o arquivo JSON.")
                 return
-
 
             cidade = self.cidade_combo.currentText().strip()
             orgao = self.orgao_combo.currentText().strip()
@@ -532,6 +531,16 @@ class MainWindow(QMainWindow):
 
     def switch_to_progress_screen(self, cidade, orgao, ano_inicio, ano_fim, credor_nome):
         self.stack.setCurrentWidget(self.progress_screen)
+        # Reset cancel button state safely
+        self.progress_screen.cancelar_button.setText("Cancelar")
+        self.progress_screen.cancelar_button.setStyleSheet("background-color: red; color: white;")
+    
+        try:
+          self.progress_screen.cancelar_button.clicked.disconnect()
+        except TypeError:
+           pass
+        
+        self.progress_screen.cancelar_button.clicked.connect(self.progress_screen.cancelar_busca)
         self.progress_screen.iniciar_busca(cidade, orgao, ano_inicio, ano_fim, credor_nome)
     
     def exit_app(self):

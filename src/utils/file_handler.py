@@ -7,31 +7,45 @@ from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import re
 import platform
+import subprocess
+from pathlib import Path
 
 def formatar_nome(nome):
+    
     nome_limpo = re.sub(r'[<>:"/\\|?*]', '', nome).strip()
     return ' '.join([parte.capitalize() for parte in nome_limpo.replace('_', ' ').split()])
 
 
+def obter_pasta_desktop():
+    sistema = platform.system()
+    
+    if sistema == "Linux":
+        try:
+            result = subprocess.run(['xdg-user-dir', 'DESKTOP'], capture_output=True, text=True)
+            desktop_path = result.stdout.strip()
+            if desktop_path and os.path.exists(desktop_path):
+                return Path(desktop_path)
+            else:
+                print("Pasta Desktop não encontrada ou vazia. Usando a pasta pessoal.")
+                return Path.home()
+        except Exception as e:
+            print(f"Erro ao obter Desktop pelo xdg-user-dir: {e}")
+            return Path.home()
+    else:
+        return Path.home() / 'Desktop'
+
 def criar_pasta_do_credor(credor_nome, cidade, orgao, ano_inicio, ano_fim, path_destino=None):
     nome_formatado = formatar_nome(credor_nome)
     
-    sistema = platform.system()
-    
     if path_destino is None:
-        if sistema == "Linux" or sistema == "Darwin":  
-            user_home = os.path.expanduser("~")
-            pasta_base = os.path.join(user_home, 'Desktop', 'Relatórios de Diárias', cidade, orgao, nome_formatado)
-        elif sistema == "Windows":  
-            user_profile = os.environ.get('USERPROFILE', os.path.expanduser("~"))
-            pasta_base = os.path.join(user_profile, 'Desktop', 'Relatórios de Diárias', cidade, orgao, nome_formatado)
+        pasta_base = obter_pasta_desktop() / 'Relatórios de Diárias' / cidade / orgao / nome_formatado
     else:
-        pasta_base = path_destino
-
-    if not os.path.exists(pasta_base):
-        os.makedirs(pasta_base, exist_ok=True)
+        pasta_base = Path(path_destino)
     
-    return pasta_base
+    if not pasta_base.exists():
+        pasta_base.mkdir(parents=True, exist_ok=True)
+    
+    return str(pasta_base)
 
 
 def save_to_excel(dados_empenhos, credor_nome="CREDOR", ano_inicio="XXXX", ano_fim="XXXX", cidade="CIDADE", orgao="ÓRGÃO", path_destino=None):

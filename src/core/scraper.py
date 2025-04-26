@@ -5,6 +5,57 @@ import unicodedata
 import os
 from rich.console import Console
 
+def carregar_ou_criar_cidades():
+    json_path = resource_path('resources/cidades_chave.json')
+    cidades_padrao = [
+        "CARLOS CHAGAS", "NANUQUE", "ITAOBIM", "GOVERNADOR VALADARES", "TEOFILO OTONI", 
+        "TEIXEIRA DE FREITAS", "ITANHEM", "MEDEIROS NETO", "VITORIA", "AGUAS FORMOSAS", 
+        "IPATINGA", "BELO HORIZONTE", "BRASILIA", "SAO PAULO", "CRISOLITA", 
+        "NOVO ORIENTE DE MINAS", "PAVAO", "FRONTEIRA DOS VALES", "UMBURATIBA", 
+        "UMBURANINHA", "SANTA HELENA DE MINAS", "FELISBURGO", "ALMENARA", "BH"
+    ]
+
+    if not os.path.exists(json_path):
+        try:
+            os.makedirs(os.path.dirname(json_path), exist_ok=True)
+            with open(json_path, 'w', encoding='utf-8') as file:
+                json.dump(cidades_padrao, file, ensure_ascii=False, indent=4)
+            print(f"[INFO] Arquivo cidades.json criado em {json_path}")
+        except Exception as e:
+            print(f"[ERRO] Não foi possível criar cidades.json: {e}")
+            return []
+
+    try:
+        with open(json_path, 'r', encoding='utf-8') as file:
+            return json.load(file)
+    except Exception as e:
+        print(f"[ERRO] Erro ao carregar cidades.json: {e}")
+        return []
+    
+def carregar_ou_criar_palavras_chave():
+    json_path = resource_path('resources/palavras_chave.json')
+    palavras_padrao = [
+        'diária', 'diaria', 'diárias', 'diarias', 
+        'viagem', 'viagens', 'locomoção', 'locomocao', 'deslocamento'
+    ]
+
+    if not os.path.exists(json_path):
+        try:
+            os.makedirs(os.path.dirname(json_path), exist_ok=True)
+            with open(json_path, 'w', encoding='utf-8') as file:
+                json.dump(palavras_padrao, file, ensure_ascii=False, indent=4)
+            print(f"[INFO] Arquivo palavras_chave.json criado em {json_path}")
+        except Exception as e:
+            print(f"[ERRO] Não foi possível criar palavras_chave.json: {e}")
+            return []
+
+    try:
+        with open(json_path, 'r', encoding='utf-8') as file:
+            return json.load(file)
+    except Exception as e:
+        print(f"[ERRO] Erro ao carregar palavras_chave.json: {e}")
+        return []
+        
 def resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
@@ -96,8 +147,8 @@ class DiariasCollector:
             soup = BeautifulSoup(response.text, 'html.parser')
             rows = soup.find_all('tr')
             
-            palavras_chave = ['diária', 'diaria', 'diárias', 'diarias', 'viagem', 'viagens', 
-                             'locomoção', 'locomocao', 'deslocamento']
+            palavras_chave = carregar_ou_criar_palavras_chave()
+
             valor_total = 0.0
             dados_empenhos = []
             
@@ -170,32 +221,28 @@ class DiariasCollector:
                 credor_nome_normalizado = self.remover_acentos(credor_nome).lower()
                 credor_normalizado = self.remover_acentos(credor).lower()
 
+
                 if credor_nome_normalizado in credor_normalizado:
                     self.atualizar_progresso(
                         f"[green]Diária de Viagem para {credor} no empenho N°{numero_empenho} "
                         f"no dia {data} no valor de {valor_bruto}.[/green]"
                     )
 
-                    cidades = [
-                        "CARLOS CHAGAS", "NANUQUE", "ITAOBIM", "GOVERNADOR VALADARES", "TEOFILO OTONI", 
-                        "TEIXEIRA DE FREITAS", "ITANHEM", "MEDEIROS NETO", "VITORIA", "AGUAS FORMOSAS", 
-                        "IPATINGA", "BELO HORIZONTE", "BRASILIA", "SAO PAULO", "CRISOLITA", 
-                        "NOVO ORIENTE DE MINAS", "PAVAO", "FRONTEIRA DOS VALES", "UMBURATIBA", 
-                        "UMBURANINHA", "SANTA HELENA DE MINAS", "FELISBURGO", "ALMENARA", "BH"
-                    ]
-    
-                    descricao_sem_acento = self.remover_acentos(descricao)
-                    cidade_encontrada = False
-    
+                    cidades = carregar_ou_criar_cidades()
+
+                    descricao_sem_acento = self.remover_acentos(descricao).lower()
+                    cidade_encontrada = None
+
                     for cidade in cidades:
                         if cidade.lower() in descricao_sem_acento:
-                            self.atualizar_progresso(f"Cidade identificada na descrição: {cidade}")
-                            cidade_encontrada = True
+                            cidade_encontrada = cidade
                             break
-    
-                    if not cidade_encontrada:
-                        descricao = "VIAGEM SEM LOCAL IDENTIFICADO"
-    
+
+                    if cidade_encontrada:
+                        descricao = f"VIAGEM A {cidade_encontrada}"
+                    else:
+                        descricao = "VIAGEM A LOCAL NÃO INFORMADO"
+
                     dados = {
                         'Número do Empenho': numero_empenho,
                         'Data': data,
@@ -207,7 +254,6 @@ class DiariasCollector:
                         'Descrição': descricao
                     }
                     return valor_float, dados
-
         except Exception as e:
             self.atualizar_progresso(f"Erro ao processar empenho {url_empenho}: {str(e)}")
         
