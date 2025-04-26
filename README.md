@@ -11,6 +11,58 @@ Este sistema é um web scraper especializado que organiza informações já púb
 - Consolidar dados dispersos em relatórios organizados
 - Automatizar a coleta de informações públicas
 
+### Download e Execução
+## 🖥️ Execução via Interface Gráfica
+
+### 🪟 Windows
+
+Você pode escolher entre baixar o **instalador** ou o **arquivo .zip**:
+
+#### 📦 Instalador (recomendado)
+1. Acesse a aba **[Releases](https://github.com/Andley302/diarias-collector/releases)** do repositório.
+2. Baixe o arquivo **`DiariasCollector_Windows_Setup_x86_64.exe`** para Windows x64.
+3. Execute o instalador e siga as instruções na tela.
+4. Após a instalação, abra o **Diárias Collector** pelo Menu Iniciar ou pela Área de Trabalho.
+
+> Durante a instalação, será necessário aceitar os Termos de Uso.
+
+---
+
+#### 🗜️ Arquivo .zip (alternativo)
+1. Acesse a aba **[Releases](https://github.com/Andley302/diarias-collector/releases)**.
+2. Baixe o arquivo **`DiariasCollector_Windows_x86_64.zip`**.
+3. Extraia o conteúdo do `.zip`.
+4. Abra a pasta extraída e dê **dois cliques** em `DiariasCollector.exe` para iniciar o programa.
+
+> Atenção: usando a versão `.zip`, você será responsável por manter os arquivos organizados manualmente.
+
+### 🐧 Linux
+1. Acesse a aba **[Releases](https://github.com/Andley302/diarias-collector/releases)** do repositório.
+2. Baixe o arquivo para `DiariasCollector_Linux_x86_64.zip`.
+3. Extraia o conteúdo do `.zip`.
+4. Abra a pasta extraída, procure o executável e clique com o botão direito no arquivo `DiariasCollector`, vá em **Propriedades > Permissões** e marque **"Permitir execução como programa"** (se necessário).
+5. Dê **dois cliques** no arquivo para executá-lo.
+
+## 💻 Execução via Terminal
+
+### 🪟 Windows
+```bash
+cd DiariasCollector
+DiariasCollector.exe --terminal
+```
+
+### 🐧 Linux
+```bash
+cd DiariasCollector
+chmod +x DiariasCollector
+./DiariasCollector --terminal
+```
+
+**Observações:**
+- No Windows: Execute diretamente após entrar na pasta extraída
+- No Linux: Necessário dar permissão de execução apenas na primeira vez
+- O terminal deve estar no diretório onde o arquivo foi extraído
+
 ### Considerações Importantes
 
 #### Dados e Precisão
@@ -80,42 +132,6 @@ Termos utilizados para identificar empenhos relacionados a diárias:
     // ... outras palavras-chave
 ]
 ```
-## 🖥️ Execução via Interface Gráfica
-
-### 🪟 Windows
-1. Acesse a aba **[Releases](https://github.com/Andley302/diarias-collector/releases)** do repositório.
-2. Baixe o arquivo `DiariasCollector_Windows_x86_64.zip`.
-3. Extraia o conteúdo do `.zip`.
-4. Abra a pasta extraída e dê **dois cliques** em `DiariasCollector.exe` para iniciar o programa.
-
-### 🐧 Linux
-1. Acesse a aba **[Releases](https://github.com/Andley302/diarias-collector/releases)** do repositório.
-2. Baixe o arquivo `DiariasCollector_Linux_x86_64.zip`.
-3. Extraia o conteúdo do `.zip`.
-4. Abra a pasta extraída, clique com o botão direito no arquivo `DiariasCollector`, vá em **Propriedades > Permissões** e marque **"Permitir execução como programa"** (se necessário).
-5. Dê **dois cliques** no arquivo para executá-lo.
-
-## 💻 Execução via Terminal
-
-### 🪟 Windows
-```bash
-cd DiariasCollector
-DiariasCollector.exe --terminal
-```
-
-### 🐧 Linux
-```bash
-cd DiariasCollector
-chmod +x DiariasCollector
-./DiariasCollector --terminal
-```
-
-**Observações:**
-- No Windows: Execute diretamente após entrar na pasta extraída
-- No Linux: Necessário dar permissão de execução apenas na primeira vez
-- O terminal deve estar no diretório onde o arquivo foi extraído
-
-
 ## Compilação
 Compile o código-fonte na sua máquina local para gerar o executável. Fique livre para explorar e modificar o código-fonte para atender às suas necessidades específicas.
 
