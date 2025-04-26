@@ -34,7 +34,7 @@ Este sistema é um web scraper especializado que organiza informações já púb
 
 ## Cidades e Portais Suportados
 
-OO sistema atualmente suporta os municípios e órgãos que usam o Portal da Transparência da Digitaliza (https://www.digitaliza.com.br). Veja a lista abaixo:
+Os sistema atualmente suporta os municípios e órgãos que usam o Portal da Transparência da Digitaliza (https://www.digitaliza.com.br). Veja a lista abaixo:
 
 ### Machacalis
 - Prefeitura Municipal de Machacalis
