@@ -99,6 +99,7 @@ chmod +x DiariasCollector
 
 
 ## Compilação
+Compile o código-fonte na sua máquina local para gerar o executável. Fique livre para explorar e modificar o código-fonte para atender às suas necessidades específicas.
 
 ## Requisitos
 - Python 3.12
