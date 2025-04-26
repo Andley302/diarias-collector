@@ -178,4 +178,8 @@ pip install PyQt6
 5. Pull Request
 
 ## Licença
-MIT License
+
+Este projeto está licenciado sob a [Licença MIT](LICENSE) - veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
