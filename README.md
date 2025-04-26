@@ -46,7 +46,7 @@ Os sistema atualmente suporta os municípios e órgãos que usam o Portal da Tra
 ### Umburatiba
 - Prefeitura Municipal de Umburatiba
 
-O arquivo `cidades.json` (em src/resources) mantém o mapeamento entre cidades, órgãos e seus respectivos portais de transparência. Esta estrutura permite:
+O arquivo `cidades.json` (em resources) mantém o mapeamento entre cidades, órgãos e seus respectivos portais de transparência. Esta estrutura permite:
 
 - Organização hierárquica cidade -> órgão -> URL
 - Fácil adição de novos portais
