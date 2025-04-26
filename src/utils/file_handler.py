@@ -14,24 +14,20 @@ def formatar_nome(nome):
 
 
 def criar_pasta_do_credor(credor_nome, cidade, orgao, ano_inicio, ano_fim, path_destino=None):
-    # Formatar o nome do credor
     nome_formatado = formatar_nome(credor_nome)
     
-    # Verifique o sistema operacional
     sistema = platform.system()
     
-    # Caso não seja fornecido um caminho, use o diretório padrão
     if path_destino is None:
-        if sistema == "Linux" or sistema == "Darwin":  # Linux ou macOS
+        if sistema == "Linux" or sistema == "Darwin":  
             user_home = os.path.expanduser("~")
             pasta_base = os.path.join(user_home, 'Desktop', 'Relatórios de Diárias', cidade, orgao, nome_formatado)
-        elif sistema == "Windows":  # Windows
+        elif sistema == "Windows":  
             user_profile = os.environ.get('USERPROFILE', os.path.expanduser("~"))
             pasta_base = os.path.join(user_profile, 'Desktop', 'Relatórios de Diárias', cidade, orgao, nome_formatado)
     else:
         pasta_base = path_destino
 
-    # Criar o diretório se não existir
     if not os.path.exists(pasta_base):
         os.makedirs(pasta_base, exist_ok=True)
     
@@ -41,7 +37,7 @@ def criar_pasta_do_credor(credor_nome, cidade, orgao, ano_inicio, ano_fim, path_
 def save_to_excel(dados_empenhos, credor_nome="CREDOR", ano_inicio="XXXX", ano_fim="XXXX", cidade="CIDADE", orgao="ÓRGÃO", path_destino=None):
     if not dados_empenhos or len(dados_empenhos) == 0:
         print("Nenhum dado de empenho para salvar.")
-        return None  # Retorna None ou um caminho de erro caso não haja dados.
+        return None  
 
     try:
         pasta_destino = criar_pasta_do_credor(credor_nome, cidade, orgao, ano_inicio, ano_fim, path_destino)
@@ -56,9 +52,9 @@ def save_to_excel(dados_empenhos, credor_nome="CREDOR", ano_inicio="XXXX", ano_f
         return None
 
 def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, cidade, orgao, path_destino=None):
-    if not dados_empenhos or len(dados_empenhos) == 0:
-        print("Nenhum dado de empenho para gerar o PDF.")
-        return None  # Retorna None ou um caminho de erro caso não haja dados.
+    #if not dados_empenhos or len(dados_empenhos) == 0:
+    #    print("Nenhum dado de empenho para gerar o PDF.")
+    #    return None  
 
     try:
         pasta_destino = criar_pasta_do_credor(credor_nome, cidade, orgao, ano_inicio, ano_fim, path_destino)

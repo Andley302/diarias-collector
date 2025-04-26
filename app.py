@@ -1,6 +1,4 @@
 import sys
-import os
-
 
 def main():
 
@@ -19,7 +17,6 @@ def main():
         sys.exit(1)
 
     try:
-        # Executar GUI
         app = QApplication(sys.argv)
         window = MainWindow()
         window.show()
@@ -35,10 +32,8 @@ def main():
                 "Alternativamente, você pode usar o modo terminal com: python app.py --terminal"
             )
 
-            # Exibir aviso no terminal
             print("\033[93m[AVISO]\033[0m " + error_message)
 
-            # Tentar exibir em janela gráfica
             try:
                 msg = QMessageBox()
                 msg.setIcon(QMessageBox.Icon.Warning)

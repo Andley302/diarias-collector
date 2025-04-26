@@ -2,16 +2,18 @@ import os
 import sys
 from PyQt6.QtWidgets import  (QMainWindow, QWidget, QVBoxLayout, 
                              QLabel, QComboBox, QLineEdit, QPushButton, 
-                             QTextEdit, QMessageBox, QStackedWidget, QFormLayout, QApplication, QFileDialog)
+                             QTextEdit, QMessageBox, QStackedWidget, QFormLayout, QApplication, QFileDialog, QCheckBox, QDialog, QMenuBar, QMenu, QTextBrowser)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QDate, QUrl
-from PyQt6.QtGui import QFont, QIcon, QDesktopServices
+from PyQt6.QtGui import QFont, QIcon, QDesktopServices, QAction
 
-from src.diarias_scraper import DiariasCollector
+from src.core.scraper import DiariasCollector
 from src.utils import save_to_excel, save_to_pdf
 from rich.console import Console
 from rich.logging import RichHandler
 import logging
 
+exibir_detalhes_log = False
+versao_software = "1.0.0" 
 
 console = Console()
 logging.basicConfig(
@@ -45,7 +47,6 @@ class ScraperThread(QThread):
         )
         self.finished_signal.emit(sucesso, mensagem, dados_empenhos, valor_total)
 
-# Tela de boas-vindas
 class WelcomeScreen(QWidget):
     def __init__(self, controller):
         super().__init__()
@@ -55,8 +56,8 @@ class WelcomeScreen(QWidget):
     def setup_ui(self):
         layout = QVBoxLayout()
 
-        self.log_text = QTextEdit()
-        self.log_text.setReadOnly(True)
+        #self.log_text = QTextEdit()
+        #self.log_text.setReadOnly(True)
 
         title_font = QFont("Segoe UI", 18, QFont.Weight.Bold)
         title_font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias)
@@ -73,32 +74,34 @@ class WelcomeScreen(QWidget):
         instructions.setAlignment(Qt.AlignmentFlag.AlignCenter)
         instructions.setWordWrap(True)
 
+        self.terms_checkbox = QCheckBox("Li e aceito os termos de uso")
+        self.terms_checkbox.setChecked(True)
+
+        terms_link = QLabel("<a href='#'>Ver termos de uso</a>")
+        terms_link.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        terms_link.setOpenExternalLinks(False)
+        terms_link.linkActivated.connect(self.controller.show_terms_dialog)
+
+
         start_button = QPushButton("Iniciar Busca")
-        start_button.clicked.connect(self.start_logging)
         start_button.setMinimumHeight(40)
-        start_button.clicked.connect(self.controller.switch_to_search_screen)
-
-
-        # Estilizando o botão
-        start_button.setStyleSheet("""
+        start_button.clicked.connect(self.validate_and_start)
+        start_button.setStyleSheet(""" 
             QPushButton {
-                background-color: #4CAF50; /* Cor de fundo verde */
-                color: white; /* Cor do texto branco */
-                border: none; /* Sem borda */
-                padding: 10px 20px; /* Espaçamento interno */
-                text-align: center; /* Texto centralizado */
-                text-decoration: none; /* Sem sublinhado */
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                text-align: center;
                 font-size: 16px;
                 margin: 4px 2px;
-                border-radius: 5px; /* Bordas arredondadas */
+                border-radius: 5px;
             }
-
             QPushButton:hover {
-                background-color: #45a049; /* Cor de fundo verde mais escura ao passar o mouse */
+                background-color: #45a049;
             }
-
             QPushButton:pressed {
-                background-color: #367c39; /* Cor de fundo verde ainda mais escura ao pressionar */
+                background-color: #367c39;
             }
         """)
 
@@ -110,6 +113,11 @@ class WelcomeScreen(QWidget):
         layout.addWidget(instructions)
         layout.addSpacing(40)
         layout.addWidget(start_button)
+        layout.addSpacing(10)
+        layout.addWidget(self.terms_checkbox)
+        layout.addWidget(terms_link)
+        layout.addSpacing(30)
+        #layout.addWidget(self.log_text)
         layout.addStretch()
 
         self.setLayout(layout)
@@ -118,8 +126,15 @@ class WelcomeScreen(QWidget):
        log_message("Iniciando a busca...")
        log_message("Erro na busca!", logging.ERROR)
 
+    
+    def validate_and_start(self):
+        if self.terms_checkbox.isChecked():
+            self.start_logging()
+            self.controller.switch_to_search_screen()
+        else:
+            QMessageBox.warning(self, "Aviso", "Você precisa aceitar os termos de uso para continuar.")
 
-# Tela de busca
+
 class SearchScreen(QWidget):
     def __init__(self, controller):
         super().__init__()
@@ -138,24 +153,20 @@ class SearchScreen(QWidget):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        # Título
         title_label = QLabel("Busca de Diárias")
         title_font = QFont("Segoe UI", 18, QFont.Weight.Bold)
         title_font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias)
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Descrição
         description_label = QLabel("Preencha os dados abaixo para buscar informações sobre diárias.")
         description_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         description_label.setStyleSheet("color: gray; font-size: 12px;")
 
-        # Formulário
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         form_layout.setFormAlignment(Qt.AlignmentFlag.AlignTop)
 
-        # Cidade e órgão
         self.cidade_combo = QComboBox()
         self.cidade_combo.addItems(self.scraper.cidades_orgaos.keys())
         self.cidade_combo.currentIndexChanged.connect(self.atualizar_orgaos)
@@ -173,7 +184,6 @@ class SearchScreen(QWidget):
             self.ano_inicio_combo.addItem(str(ano))
             self.ano_fim_combo.addItem(str(ano))
 
-        # Define o ano atual como selecionado
         index_atual = self.ano_inicio_combo.findText(str(ano_atual))
         if index_atual != -1:
             self.ano_inicio_combo.setCurrentIndex(index_atual)
@@ -182,7 +192,6 @@ class SearchScreen(QWidget):
         form_layout.addRow("Ano Início:", self.ano_inicio_combo)
         form_layout.addRow("Ano Fim:", self.ano_fim_combo)
 
-        # Nome do credor
         self.credor_edit = QLineEdit()
         form_layout.addRow("Nome:", self.credor_edit)
 
@@ -232,7 +241,6 @@ class SearchScreen(QWidget):
             ano_fim = self.ano_fim_combo.currentText().strip()
             credor = self.credor_edit.text().strip()
 
-            # Verificações
             if not cidade:
                 QMessageBox.warning(self, "Campo obrigatório", "Selecione uma cidade.")
                 return
@@ -257,10 +265,7 @@ class SearchScreen(QWidget):
 
             self.controller.switch_to_progress_screen(cidade, orgao, ano_inicio, ano_fim, credor)
 
-#Logs Detalhados
-exibir_detalhes_log = False
 
-# Update the LogHandler class
 from rich.text import Text
 from rich.console import Console
 
@@ -280,34 +285,27 @@ class LogHandler:
     def write(self, message):
         try:
             if message.strip() and not self._is_http_log(message):
-                # Remove Rich markup tags usando regex
                 message = self._remove_rich_tags(message)
                 
-                # Garante quebra de linha
                 if not message.endswith('\n'):
                     message += '\n'
                 
-                # Define a cor baseada no conteúdo
                 color = self._get_color(message)
                 html_message = f'<span style="color:{color}; white-space:pre-wrap;">{message}</span>'
                 
-                # Insere HTML no QTextEdit
                 cursor = self.text_widget.textCursor()
                 cursor.movePosition(QTextCursor.MoveOperation.End)
                 cursor.insertHtml(html_message)
                 self.text_widget.setTextCursor(cursor)
 
-                # Força scroll para o final
                 self.text_widget.verticalScrollBar().setValue(
                     self.text_widget.verticalScrollBar().maximum()
                 )
 
         except Exception as e:
-            # fallback para texto plano, sem formatação
             self.text_widget.append(message)
 
     def _remove_rich_tags(self, message):
-        # Remove qualquer tag [tag] ou [/tag]
         return re.sub(r'\[/?[a-zA-Z0-9_=#]+\]', '', message)
 
     def _get_color(self, message):
@@ -356,13 +354,14 @@ class ProgressScreen(QWidget):
         self.empenho_label = QLabel()
         self.empenho_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.log_text = QTextEdit()  # <== AQUI criamos o atributo antes de usar
+        self.log_text = QTextEdit()  
         self.log_text.setReadOnly(True)
 
         self.log_text.setFont(QFont("Monospace", 10))
         self.log_text.setStyleSheet("background-color: black; font-family: monospace; font-size: 12px;")
 
         self.cancelar_button = QPushButton("Cancelar")
+        self.cancelar_button.setStyleSheet("background-color: red; color: white;")
         self.cancelar_button.clicked.connect(self.cancelar_busca)
 
         layout.addWidget(title_label)
@@ -416,36 +415,30 @@ class ProgressScreen(QWidget):
      if sucesso:
         try:
 
-            # Caminho para o Desktop
             user_profile = os.environ.get('USERPROFILE', os.path.expanduser("~"))
             desktop_path = os.path.join(user_profile, 'Desktop')
 
-            # Exibir a janela de diálogo para escolher o diretório
             pasta_usuario = QFileDialog.getExistingDirectory(
-                None,  # Passa None para não especificar uma janela pai
-                "Escolha o diretório para salvar os relatórios",  # Título da janela
-                desktop_path,  # Caminho inicial sendo o Desktop
-                QFileDialog.Option.ShowDirsOnly  # Opção para mostrar apenas diretórios
+                None,  
+                "Escolha o diretório para salvar os relatórios",  
+                desktop_path, 
+                QFileDialog.Option.ShowDirsOnly  
             )
 
-            # Se o usuário não escolher um diretório, usar o Desktop como padrão
             if not pasta_usuario:
                 pasta_usuario = desktop_path
 
-            # Criar o diretório base caso não exista
             os.makedirs(pasta_usuario, exist_ok=True)
 
-            # Salvar o relatório Excel
             excel_path = save_to_excel(
                 dados_empenhos, 
                 credor_nome=self.thread.credor_nome,
                 ano_inicio=self.thread.ano_inicio, 
                 ano_fim=self.thread.ano_fim,
                 cidade=self.thread.cidade,
-                path_destino=pasta_usuario  # Usando o diretório escolhido
+                path_destino=pasta_usuario  
             )
 
-            # Salvar o relatório PDF
             pdf_path = save_to_pdf(
                 dados_empenhos,
                 valor_total=valor_total,
@@ -454,10 +447,11 @@ class ProgressScreen(QWidget):
                 ano_fim=self.thread.ano_fim,
                 cidade=self.thread.cidade,
                 orgao=self.thread.orgao,
-                path_destino=pasta_usuario  # Usando o diretório escolhido
+                path_destino=pasta_usuario  
             )
 
             self.cancelar_button.setText("Voltar")
+            self.cancelar_button.setStyleSheet("background-color: blue; color: white;")
             self.cancelar_button.clicked.disconnect()
             self.cancelar_button.clicked.connect(self.controller.switch_to_search_screen)
 
@@ -466,15 +460,13 @@ class ProgressScreen(QWidget):
             f"<a href='{pdf_path}'>Clique aqui para abrir o PDF</a><br>"
             )
         
-            self.empenho_label.setOpenExternalLinks(False)  # Desliga a abertura automática
-            self.empenho_label.linkActivated.connect(self.controller.abrir_pdf_no_navegador)  # Conecta seu slot
+            self.empenho_label.setOpenExternalLinks(False)  
+            self.empenho_label.linkActivated.connect(self.controller.abrir_pdf_no_navegador)  
 
-            # Log de sucesso
-            if excel_path:  # Verifica se excel_path não é None, vazio ou falso
+            if excel_path: 
                 self.logger.info(f"\nRelatório Excel salvo em: {excel_path}")
             self.logger.info(f"Relatório PDF salvo em: {pdf_path}")
 
-            # Exibir mensagem de sucesso
             QMessageBox.information(None, "Sucesso", f"Relatórios salvos em:\n{pasta_usuario}")
 
         except Exception as e:
@@ -482,6 +474,7 @@ class ProgressScreen(QWidget):
             QMessageBox.critical(None, "Erro", f"Erro ao salvar relatórios: {str(e)}")
         
             self.cancelar_button.setText("Voltar")
+            self.cancelar_button.setStyleSheet("background-color: blue; color: white;")
             self.cancelar_button.clicked.disconnect()
             self.cancelar_button.clicked.connect(self.controller.switch_to_search_screen)
 
@@ -495,10 +488,10 @@ class ProgressScreen(QWidget):
             )
 
         self.cancelar_button.setText("Voltar")
+        self.cancelar_button.setStyleSheet("background-color: blue; color: white;")
         self.cancelar_button.clicked.disconnect()
         self.cancelar_button.clicked.connect(self.controller.switch_to_search_screen)
 
-# Janela principal
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -514,6 +507,8 @@ class MainWindow(QMainWindow):
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
+
+        self.setup_menu()
 
         main_layout = QVBoxLayout(self.central_widget)
         self.stack = QStackedWidget()
@@ -553,13 +548,160 @@ class MainWindow(QMainWindow):
             QApplication.quit()  
 
     def abrir_pdf_no_navegador(self, link):
-      # Garante que é um caminho absoluto e corretamente codificado
       caminho_absoluto = os.path.abspath(link)
     
       if os.path.exists(caminho_absoluto):
-          # Cria uma URL no formato file:///C:/... com encoding correto
           url = QUrl.fromLocalFile(caminho_absoluto)
           print(f"Abrindo PDF no navegador: {url.toString()}")
           QDesktopServices.openUrl(url)
       else:
           print(f"Arquivo não encontrado: {caminho_absoluto}")
+
+    def setup_menu(self):
+        menubar = self.menuBar()
+    
+        help_menu = menubar.addMenu("Sobre")
+    
+        terms_action = QAction("Ver Termos de Uso", self)
+        terms_action.triggered.connect(self.show_terms_dialog)
+        help_menu.addAction(terms_action)
+    
+        licenses_action = QAction("Licenças de Software", self)
+        licenses_action.triggered.connect(self.show_licenses_dialog)
+        help_menu.addAction(licenses_action)
+    
+        github_action = QAction("Abrir GitHub", self)
+        github_action.triggered.connect(self.open_github)
+        help_menu.addAction(github_action)
+
+        version_action = QAction("Versão", self)
+        version_action.triggered.connect(self.show_version)
+        help_menu.addAction(version_action)
+
+    def show_licenses_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Licenças de Software")
+        dialog.setMinimumSize(500, 400)
+    
+        layout = QVBoxLayout()
+        text = QTextBrowser()
+    
+        licenses_text = """LICENÇAS DE SOFTWARE
+
+        Este projeto utiliza os seguintes pacotes open source:
+
+        PyQt6 (GPL v3)
+        - Interface gráfica
+        - https://www.qt.io/licensing
+
+        Requests (Apache 2.0)
+        - Requisições HTTP
+        - https://requests.readthedocs.io/
+
+        BeautifulSoup4 (MIT)
+        - Parser HTML
+        - https://www.crummy.com/software/BeautifulSoup/
+
+        Pandas (BSD 3-Clause)
+        - Manipulação de dados
+        - https://pandas.pydata.org/
+
+        XlsxWriter (BSD)
+        - Exportação Excel
+        - https://xlsxwriter.readthedocs.io/
+
+        ReportLab (BSD)
+        - Geração de PDFs
+        - https://www.reportlab.com/
+
+        Agradecemos aos desenvolvedores de todas estas ferramentas que tornaram este projeto possível."""
+
+        text.setPlainText(licenses_text)
+        layout.addWidget(text)
+    
+        close_button = QPushButton("Fechar")
+        close_button.clicked.connect(dialog.accept)
+        layout.addWidget(close_button, alignment=Qt.AlignmentFlag.AlignRight)
+    
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def show_version(self):
+       QMessageBox.information(self, "Versão", f"Diárias Collector v{versao_software}")
+
+    def open_github(self):
+        QDesktopServices.openUrl(QUrl("https://github.com/Andley302/diarias-collector"))
+
+    def show_terms_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Termos de Uso")
+        dialog.setMinimumSize(500, 400)
+
+        layout = QVBoxLayout()
+        text = QTextBrowser()
+        text.setPlainText("""TERMOS DE USO - DIÁRIAS COLLECTOR
+
+        1. NATUREZA DO SOFTWARE
+
+        Este é um software livre e de código aberto (open source) sob licença MIT, desenvolvido para automatizar a coleta de informações públicas sobre diárias e viagens disponíveis em portais de transparência.
+
+        2. DADOS E PRECISÃO
+
+        • Todos os dados coletados são de natureza pública
+        • O sistema usa palavras-chave como "diárias", "viagens" etc para busca
+        • Tente usar o nome completo do credor para melhorar a precisão. Nomes parciais ou abreviaturas podem gerar resultados imprecisos.
+        • Podem ocorrer falhas na coleta devido a:
+          - Mudanças nos padrões HTML dos portais
+          - Implementação de captchas ou rate limits
+          - Proteções contra automação
+          - Alterações nas estruturas das páginas
+
+        3. RESPONSABILIDADE DO USUÁRIO
+
+        • Verificar a URL de cada empenho nos relatórios gerados
+        • Conferir a precisão dos dados nas fontes oficiais
+        • Assumir responsabilidade pelo uso dos dados coletados
+        • Responder por eventuais problemas jurídicos decorrentes do uso
+
+        4. LIMITAÇÕES TÉCNICAS
+        
+        • O sistema pode apresentar instabilidades devido a:
+          - Proteções implementadas nos portais
+          - Limites de requisições
+          - Mudanças nas estruturas dos sites
+          - Bloqueios de IP
+
+        5. RESTRIÇÕES DE USO
+
+        • Proibida a comercialização do software
+        • Permitido:
+          - Adicionar novas cidades
+          - Implementar suporte a novos portais
+          - Desenvolver novas funcionalidades
+          - Contribuir com o código fonte
+
+        6. BOAS PRÁTICAS
+
+        • Use como ferramenta de automação
+        • Verifique sempre os dados coletados
+        • Respeite os limites dos portais
+        • Mantenha intervalos entre consultas
+
+        7. ISENÇÃO DE RESPONSABILIDADE
+
+        O desenvolvedor não se responsabiliza por:
+        • Precisão dos dados coletados
+        • Uso indevido da ferramenta
+        • Problemas legais decorrentes
+        • Indisponibilidade dos portais                                       
+
+        Ao usar este software, você concorda com todos os termos acima.""")  
+       
+        layout.addWidget(text)
+
+        close_button = QPushButton("Fechar")
+        close_button.clicked.connect(dialog.accept)
+        layout.addWidget(close_button, alignment=Qt.AlignmentFlag.AlignRight)
+
+        dialog.setLayout(layout)
+        dialog.exec()

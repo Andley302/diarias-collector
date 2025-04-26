@@ -4,7 +4,7 @@ from rich import print
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.panel import Panel
-from src.diarias_scraper import DiariasCollector
+from src.core.scraper import DiariasCollector
 from src.utils import save_to_excel, save_to_pdf
 
 def escolher_opcao(titulo, opcoes):
