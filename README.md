@@ -1,5 +1,9 @@
 # Diárias Collector 🔍
 
+<p align="center">
+  <img src="screenshots/home.png" alt="Banner Diárias Collector" width="700"/>
+</p>
+
 Um web scraper especializado para organizar informações sobre subsídios de viagem públicas de pessoas nos portais de transparência.
 
 ## Sobre o Projeto
@@ -10,6 +14,28 @@ Este sistema é um web scraper especializado que organiza informações já púb
 - Facilitar a visualização de diárias por pessoa específica
 - Consolidar dados dispersos em relatórios organizados
 - Automatizar a coleta de informações públicas
+
+## 🖼️ Capturas de Tela
+
+### Tela Inicial
+<p align="center">
+  <img src="screenshots/search.png" alt="Tela Inicial" width="700"/>
+</p>
+
+### Progresso de uma Busca
+<p align="center">
+  <img src="screenshots/progress.png" alt="Progresso da Busca" width="700"/>
+</p>
+
+### Resultado de uma Busca
+<p align="center">
+  <img src="screenshots/progress_ended.png" alt="Resultado da Busca" width="700"/>
+</p>
+
+### Arquivo PDF Gerado
+<p align="center">
+  <img src="screenshots/result.png" alt="Arquivo PDF Gerado" width="700"/>
+</p>
 
 ### Download e Execução
 ## 🖥️ Execução via Interface Gráfica
@@ -45,18 +71,22 @@ Você pode escolher entre baixar o **instalador** ou o **arquivo .zip**:
 
 ## 💻 Execução via Terminal
 
-### 🪟 Windows
+* Seguia os passos de compilação (clonar repositório, instalar dependências etc)
+
+### 🪟 Windows e Linux
 ```bash
 cd DiariasCollector
-DiariasCollector.exe --terminal
+python app.py --terminal
 ```
 
 ### 🐧 Linux
 ```bash
 cd DiariasCollector
-chmod +x DiariasCollector
-./DiariasCollector --terminal
+python3 app.py --terminal
 ```
+
+### Visualização do Terminal
+![Terminal](screenshots/terminal.png)
 
 **Observações:**
 - No Windows: Execute diretamente após entrar na pasta extraída
