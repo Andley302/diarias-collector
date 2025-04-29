@@ -406,7 +406,7 @@ class ProgressScreen(QWidget):
         if empenho:
             self.empenho_label.setText(
                f"<br>Número do empenho: {empenho}<br><br>"
-               f"<b><font color='orange'>Esse processo pode demorar. Aguarde!</font></b><br>"
+               f"<b><font color='orange'>Esse processo pode demorar MUITO. Aguarde!</font></b><br>"
            )
 
         self.logger.info(mensagem)
@@ -607,6 +607,11 @@ class MainWindow(QMainWindow):
     def setup_menu(self):
         menubar = self.menuBar()
     
+        how_it_works_menu = menubar.addMenu("Informações")
+        how_it_works_action = QAction("Como Funciona?", self)
+        how_it_works_action.triggered.connect(self.show_how_it_works_dialog)
+        how_it_works_menu.addAction(how_it_works_action)
+
         help_menu = menubar.addMenu("Sobre")
     
         terms_action = QAction("Ver Termos de Uso", self)
@@ -628,7 +633,7 @@ class MainWindow(QMainWindow):
         update_action = QAction("Verificar Atualizações", self)
         update_action.triggered.connect(lambda: self.check_for_updates(True))
         help_menu.addAction(update_action)
-
+    
     def show_licenses_dialog(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Licenças de Software")
@@ -671,6 +676,74 @@ class MainWindow(QMainWindow):
         layout.addWidget(text)
     
         close_button = QPushButton("Fechar")
+        close_button.clicked.connect(dialog.accept)
+        layout.addWidget(close_button, alignment=Qt.AlignmentFlag.AlignRight)
+    
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def show_how_it_works_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Como Funciona o Diárias Collector?")
+        dialog.setMinimumSize(600, 500)
+    
+        layout = QVBoxLayout()
+        layout.setSpacing(20)
+        layout.setContentsMargins(20, 20, 20, 20)
+    
+        title = QLabel("Como Funciona o Diárias Collector?")
+        title.setStyleSheet("""
+            QLabel {
+               font-size: 18px;
+               font-weight: bold;
+             }
+        """)
+        
+        how_it_works_text = """Este programa funciona da seguinte forma:
+
+        1. Você irá escolher o municipio, orgão, anos de inicio e fim e o nome do credor (de preferência o nome completo).
+        2. O programa, internamente, irá entrar no portal de transparência do município, pegará todas as diárias do período escolhido.
+        3. Ele irá ler diária por diárias, e se contiver as palavra-chaves relacionadas e viagens, locomoção etc, ele irá extrair os dados.
+        4. Nos dados da diária, ele irá pegar o nome do credor, e se for o mesmo que você digitou, ele irá salvar os dados.
+        5. Enquanto isso, você irá acompanhar nos registros cada empenho que ele está verificando.
+        6. Quando finalizado, ele mostrará os valores totais no registro.
+        7. Você poderá salvar os dados em PDF e Excel, e o programa mostrará no registro o local onde está salvando os dados.
+        8. Você poderá abrir o PDF e visualizar os dados.
+
+        Ou seja, ele funciona como um automatizador. Ao invés de você ter que ficar verificando diária por diária, ele faz isso por você.
+
+        O programa é de código aberto e você pode ver o código no GitHub.
+        
+        Todos os dados são públicos e coletados diretamente dos portais de transparência."""
+
+        layout.addWidget(title, alignment=Qt.AlignmentFlag.AlignCenter)
+    
+        text = QTextBrowser()
+        text.setStyleSheet("""
+                QTextBrowser {
+                    border: 1px solid #DEE2E6;
+                    border-radius: 5px;
+                    padding: 15px;
+                    font-size: 14px;
+                    line-height: 1.6;
+        }
+        """)
+        text.setPlainText(how_it_works_text)
+        layout.addWidget(text)
+    
+        close_button = QPushButton("Fechar")
+        close_button.setStyleSheet("""
+                QPushButton {
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    min-width: 100px;
+                }
+                QPushButton {
+                  background-color: #0056b3;
+                }
+        """)
         close_button.clicked.connect(dialog.accept)
         layout.addWidget(close_button, alignment=Qt.AlignmentFlag.AlignRight)
     
