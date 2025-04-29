@@ -570,8 +570,14 @@ class MainWindow(QMainWindow):
       else:
           print(f"Arquivo não encontrado: {caminho_absoluto}")
 
-    def check_for_updates(self):
-        """Check for updates and show notification if a new version is available."""
+    def check_for_updates(self, show_up_to_date_message=False):
+        """
+        Check for updates and show notification if a new version is available.
+        
+        Args:
+            show_up_to_date_message (bool): Whether to show a message when software is up to date.
+                                           Set to True for manual checks, False for automatic checks.
+        """
         try:
             updater = UpdateChecker()
             update_available, latest_version, release_url = updater.check_for_updates()
@@ -588,6 +594,13 @@ class MainWindow(QMainWindow):
                 
                 if reply == QMessageBox.StandardButton.Yes:
                     QDesktopServices.openUrl(QUrl(release_url))
+            elif show_up_to_date_message:
+                # Only show this message for manual checks
+                QMessageBox.information(
+                    self,
+                    "Software Atualizado",
+                    f"Você já está usando a versão mais recente ({VERSION})."
+                )
         except Exception as e:
             print(f"Erro ao verificar atualizações: {e}")
 
@@ -613,7 +626,7 @@ class MainWindow(QMainWindow):
         help_menu.addAction(version_action)
         
         update_action = QAction("Verificar Atualizações", self)
-        update_action.triggered.connect(self.check_for_updates)
+        update_action.triggered.connect(lambda: self.check_for_updates(True))
         help_menu.addAction(update_action)
 
     def show_licenses_dialog(self):
