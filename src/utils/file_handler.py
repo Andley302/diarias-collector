@@ -4,6 +4,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Par
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.colors import HexColor
 import re
 import platform
 import subprocess
@@ -117,7 +119,7 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             0.20 * total_width  
         ]
 
-        primeiro_credor = dados_empenhos[0]['Credor'] if dados_empenhos else credor_nome
+        primeiro_credor = dados_empenhos[0]['Credor'].title() if dados_empenhos else credor_nome.title()
         valor_formatado = f"R$ {valor_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
 
         elements += [
@@ -170,7 +172,26 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             elements.append(table)
 
         if not dados_empenhos or valor_total == 0:
-           elements.append(Paragraph("Nenhuma diária registrada no período informado.", normal_style))
+            centered_style_empty = ParagraphStyle(
+                'CenteredStyle',
+                parent=normal_style,
+                alignment=TA_CENTER  # Alinha o texto horizontalmente ao centro
+            )
+
+            mensagem = Paragraph("Nenhuma diária registrada no período informado.", centered_style_empty)
+
+            caixa = Table([[mensagem]], colWidths=doc.width)
+            caixa.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), HexColor("#DCE6F1")), 
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.darkblue),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('FONTSIZE', (0, 0), (-1, -1), 11),
+                ('BOX', (0, 0), (-1, -1), 1, colors.darkblue),
+                ('PADDING', (0, 0), (-1, -1), 14),
+            ]))
+            elements.append(Spacer(1, 60))
+            elements.append(caixa)
 
 
         doc.build(elements, onFirstPage=header, onLaterPages=header)

@@ -18,10 +18,16 @@ import logging
 exibir_detalhes_log = False
 
 console = Console()
+
+nivel_log = logging.DEBUG if exibir_detalhes_log else logging.INFO
+
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
 logging.basicConfig(
-    level=logging.DEBUG, 
-    format="%(message)s", 
-    handlers=[RichHandler(console=console)]
+    level=nivel_log,
+    format="%(message)s",
+    handlers=[RichHandler(console=console, level=nivel_log)]
 )
 
 def log_message(message, level=logging.INFO):
