@@ -280,7 +280,7 @@ class DiariasCollector:
         
         base_url = orgaos[orgao]
         
-        self.atualizar_progresso(f"Buscando empenhos para {cidade} - {orgao}...")
+        self.atualizar_progresso(f"🔍 Buscando empenhos do órgão {orgao} - {cidade}")
         empenhos = self.pegar_urls_empenhos(base_url)
         
         empenhos_filtrados = self.filtrar_empenhos_por_ano(empenhos, ano_inicio, ano_fim)
@@ -288,12 +288,29 @@ class DiariasCollector:
         
         valor_total = 0.0
         dados_empenhos = []
-        
-
+               
         with self.console.status("[yellow]Processando empenhos, por favor aguarde..."):
             for i, empenho in enumerate(empenhos_filtrados):
-                self.atualizar_progresso(f"🔎 Lendo empenho {i+1} de {len(empenhos_filtrados)}")
-                valor, dados = self.extrair_empenhos_palavras_chave(empenho['url'], empenho['ano'], empenho['mes'], credor_nome)
+                url = empenho.get('url')
+                try:
+                    ano = int(empenho.get('ano'))
+                    mes = int(empenho.get('mes'))
+                except (TypeError, ValueError):
+                    self.console.print(f"[red]⚠️ Dados inválidos no empenho {i+1}, pulando...")
+                    continue
+
+                mes_str = f"{mes:02d}"
+                ano_str = str(ano)
+
+                self.atualizar_progresso(
+                    f"🔎 Lendo empenho {i+1} de {len(empenhos_filtrados)} ({mes_str}/{ano_str})"
+                )
+
+                if not url:
+                    self.console.print(f"[red]⚠️ URL ausente no empenho {i+1}, pulando...")
+                    continue
+
+                valor, dados = self.extrair_empenhos_palavras_chave(url, ano, mes, credor_nome)
                 valor_total += valor
                 dados_empenhos.extend(dados)
 

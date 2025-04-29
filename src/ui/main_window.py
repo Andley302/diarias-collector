@@ -10,6 +10,7 @@ from src.core.scraper import DiariasCollector
 from src.utils import save_to_excel, save_to_pdf
 from src.utils.version import VERSION
 from src.utils.updater import UpdateChecker
+from src.utils import obter_pasta_desktop
 from rich.console import Console
 from rich.logging import RichHandler
 import logging
@@ -415,18 +416,17 @@ class ProgressScreen(QWidget):
      if sucesso:
         try:
 
-            user_profile = os.environ.get('USERPROFILE', os.path.expanduser("~"))
-            desktop_path = os.path.join(user_profile, 'Desktop')
+            desktop_path = obter_pasta_desktop()
 
             pasta_usuario = QFileDialog.getExistingDirectory(
                 None,  
                 "Escolha o diretório para salvar os relatórios",  
-                desktop_path, 
+                str(desktop_path), 
                 QFileDialog.Option.ShowDirsOnly  
             )
 
             if not pasta_usuario:
-                pasta_usuario = desktop_path
+                pasta_usuario = os.path.abspath(pasta_usuario)
 
             os.makedirs(pasta_usuario, exist_ok=True)
 
@@ -436,6 +436,7 @@ class ProgressScreen(QWidget):
                 ano_inicio=self.thread.ano_inicio, 
                 ano_fim=self.thread.ano_fim,
                 cidade=self.thread.cidade,
+                orgao=self.thread.orgao,
                 path_destino=pasta_usuario  
             )
 
@@ -524,7 +525,6 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.stack)
         self.stack.setCurrentWidget(self.welcome_screen)
         
-        # Check for updates
         self.check_for_updates()
 
     def switch_to_welcome_screen(self):
@@ -535,7 +535,7 @@ class MainWindow(QMainWindow):
 
     def switch_to_progress_screen(self, cidade, orgao, ano_inicio, ano_fim, credor_nome):
         self.stack.setCurrentWidget(self.progress_screen)
-        # Reset cancel button state safely
+
         self.progress_screen.cancelar_button.setText("Cancelar")
         self.progress_screen.cancelar_button.setStyleSheet("background-color: red; color: white;")
     
@@ -608,9 +608,14 @@ class MainWindow(QMainWindow):
         menubar = self.menuBar()
     
         how_it_works_menu = menubar.addMenu("Informações")
+
         how_it_works_action = QAction("Como Funciona?", self)
         how_it_works_action.triggered.connect(self.show_how_it_works_dialog)
         how_it_works_menu.addAction(how_it_works_action)
+
+        legal_notice_action = QAction("Aviso Legal", self)
+        legal_notice_action.triggered.connect(self.show_legal_notice_dialog)
+        how_it_works_menu.addAction(legal_notice_action)
 
         help_menu = menubar.addMenu("Sobre")
     
@@ -699,22 +704,34 @@ class MainWindow(QMainWindow):
              }
         """)
         
-        how_it_works_text = """Este programa funciona da seguinte forma:
+        how_it_works_text = """Este programa ajuda você a encontrar e organizar informações de diárias pagas por orgãos públicos de forma automática.
 
-        1. Você irá escolher o municipio, orgão, anos de inicio e fim e o nome do credor (de preferência o nome completo).
-        2. O programa, internamente, irá entrar no portal de transparência do município, pegará todas as diárias do período escolhido.
-        3. Ele irá ler diária por diárias, e se contiver as palavra-chaves relacionadas e viagens, locomoção etc, ele irá extrair os dados.
-        4. Nos dados da diária, ele irá pegar o nome do credor, e se for o mesmo que você digitou, ele irá salvar os dados.
-        5. Enquanto isso, você irá acompanhar nos registros cada empenho que ele está verificando.
-        6. Quando finalizado, ele mostrará os valores totais no registro.
-        7. Você poderá salvar os dados em PDF e Excel, e o programa mostrará no registro o local onde está salvando os dados.
-        8. Você poderá abrir o PDF e visualizar os dados.
+        Veja como ele funciona:
 
-        Ou seja, ele funciona como um automatizador. Ao invés de você ter que ficar verificando diária por diária, ele faz isso por você.
+        1. Você escolhe a cidade, o órgão público, os anos de início e fim, e o nome da pessoa (credor) que recebeu as diárias. É importante digitar o nome completo, pois nomes parciais podem causar erros ou confusão.
+        2. O programa acessa o portal da transparência da cidade e busca todas as diárias dentro do período escolhido.
+        3. Ele analisa cada diária e verifica se há palavras como "viagem", "locomoção", entre outras relacionadas.
+        4. Se encontrar essas palavras e o nome for igual ao que você informou, ele guarda os dados dessa diária.
+        5. Enquanto faz isso, o programa mostra na tela o que está sendo processado, passo a passo.
+        6. Quando terminar, ele mostra o valor total encontrado.
+        7. Você pode salvar esses dados em arquivos PDF ou Excel. O programa informa onde esses arquivos foram salvos.
+        8. Depois, você pode abrir o PDF e ver todas as informações reunidas.
 
-        O programa é de código aberto e você pode ver o código no GitHub.
-        
-        Todos os dados são públicos e coletados diretamente dos portais de transparência."""
+        Resumindo: o programa automatiza a busca. Em vez de você ter que verificar diária por diária no site, ele faz isso por você — de forma rápida e organizada.
+
+
+        🟡 Atenção:
+
+        - Os resultados dependem da forma como os dados são exibidos nos sites. Às vezes, o portal pode mudar ou ter falhas que atrapalham a leitura.
+        - Se o nome estiver incompleto, abreviado ou diferente do que está registrado no portal, o programa pode não encontrar todas as diárias corretamente.
+        - Ele pode deixar passar alguma informação, principalmente se a descrição estiver fora do padrão esperado.
+
+
+        ✅ Sobre a legalidade:
+
+        Este programa usa apenas informações públicas, coletadas diretamente dos portais oficiais de transparência. Ele não acessa dados sigilosos nem faz nenhuma alteração — apenas consulta e organiza o que já está disponível para qualquer cidadão.
+
+        O programa é gratuito, de código aberto, e você pode ver como ele foi feito no GitHub."""
 
         layout.addWidget(title, alignment=Qt.AlignmentFlag.AlignCenter)
     
@@ -732,23 +749,26 @@ class MainWindow(QMainWindow):
         layout.addWidget(text)
     
         close_button = QPushButton("Fechar")
-        close_button.setStyleSheet("""
-                QPushButton {
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: 4px;
-                    min-width: 100px;
-                }
-                QPushButton {
-                  background-color: #0056b3;
-                }
-        """)
         close_button.clicked.connect(dialog.accept)
         layout.addWidget(close_button, alignment=Qt.AlignmentFlag.AlignRight)
     
         dialog.setLayout(layout)
         dialog.exec()
+
+    def show_legal_notice_dialog(self):
+        texto = (
+            "Este programa acessa dados públicos disponíveis nos portais oficiais de "
+            "transparência de orgãos públicos. Ele não acessa dados privados ou sigilosos, "
+            "e não realiza alterações em nenhuma informação.\n\n"
+            "Os dados exibidos são coletados automaticamente e podem conter falhas se os "
+            "portais estiverem fora do ar, se houver mudanças na estrutura do site ou se o "
+            "nome do credor estiver incompleto.\n\n"
+            "É importante verificar manualmente as informações em caso de dúvidas.\n\n"
+            "Este programa é gratuito, de código aberto, e existe para facilitar o acesso "
+            "a informações públicas por qualquer cidadão."
+        )
+
+        QMessageBox.information(self, "Aviso Legal", texto)
 
     def show_version(self):
        QMessageBox.information(self, "Versão", f"Diárias Collector v{VERSION}")

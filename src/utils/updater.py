@@ -40,7 +40,6 @@ class UpdateChecker:
             if not self.latest_version:
                 return False, self.current_version, self.release_url
             
-            # Compare versions
             current = version.parse(self.current_version)
             latest = version.parse(self.latest_version)
             
