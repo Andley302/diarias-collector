@@ -8,12 +8,13 @@ from PyQt6.QtGui import QFont, QIcon, QDesktopServices, QAction
 
 from src.core.scraper import DiariasCollector
 from src.utils import save_to_excel, save_to_pdf
+from src.utils.version import VERSION
+from src.utils.updater import UpdateChecker
 from rich.console import Console
 from rich.logging import RichHandler
 import logging
 
 exibir_detalhes_log = False
-versao_software = "1.0.1" 
 
 console = Console()
 logging.basicConfig(
@@ -522,6 +523,9 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self.stack)
         self.stack.setCurrentWidget(self.welcome_screen)
+        
+        # Check for updates
+        self.check_for_updates()
 
     def switch_to_welcome_screen(self):
         self.stack.setCurrentWidget(self.welcome_screen)
@@ -566,6 +570,27 @@ class MainWindow(QMainWindow):
       else:
           print(f"Arquivo não encontrado: {caminho_absoluto}")
 
+    def check_for_updates(self):
+        """Check for updates and show notification if a new version is available."""
+        try:
+            updater = UpdateChecker()
+            update_available, latest_version, release_url = updater.check_for_updates()
+            
+            if update_available:
+                reply = QMessageBox.question(
+                    self,
+                    "Atualização Disponível",
+                    f"Uma nova versão ({latest_version}) está disponível!\n\n"
+                    f"Você está usando a versão {VERSION}.\n\n"
+                    "Deseja visitar a página de download?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                )
+                
+                if reply == QMessageBox.StandardButton.Yes:
+                    QDesktopServices.openUrl(QUrl(release_url))
+        except Exception as e:
+            print(f"Erro ao verificar atualizações: {e}")
+
     def setup_menu(self):
         menubar = self.menuBar()
     
@@ -586,6 +611,10 @@ class MainWindow(QMainWindow):
         version_action = QAction("Versão", self)
         version_action.triggered.connect(self.show_version)
         help_menu.addAction(version_action)
+        
+        update_action = QAction("Verificar Atualizações", self)
+        update_action.triggered.connect(self.check_for_updates)
+        help_menu.addAction(update_action)
 
     def show_licenses_dialog(self):
         dialog = QDialog(self)
@@ -636,7 +665,7 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def show_version(self):
-       QMessageBox.information(self, "Versão", f"Diárias Collector v{versao_software}")
+       QMessageBox.information(self, "Versão", f"Diárias Collector v{VERSION}")
 
     def open_github(self):
         QDesktopServices.openUrl(QUrl("https://github.com/Andley302/diarias-collector"))
