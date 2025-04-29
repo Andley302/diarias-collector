@@ -11,14 +11,14 @@ from src.utils.version import VERSION
 class UpdateChecker:
     """Class to check for updates from GitHub."""
     
-    def __init__(self, github_user="Andley302", repo="diarias-collector"):
+    def __init__(self, github_user="Andley302", repo="diarias-collector", branch="development"):
         """Initialize the update checker with GitHub repository information."""
         self.github_user = github_user
         self.repo = repo
         self.current_version = VERSION
         self.latest_version = None
         self.release_url = f"https://github.com/{github_user}/{repo}/releases"
-        self.version_json_url = f"https://raw.githubusercontent.com/{github_user}/{repo}/main/version.json"
+        self.version_json_url = f"https://raw.githubusercontent.com/{github_user}/{repo}/{branch}/version.json"
     
     def check_for_updates(self):
         """
