@@ -39,9 +39,10 @@ def perguntar_credor():
             return credor
         console.print(Panel("[bold red]Erro: O nome do credor não pode estar vazio.[/bold red]", style="red"))
 
-def main():
+def main(verbose=False, modo_busca='rapida'):
     console = Console()
-    scraper = DiariasCollector()
+    
+    scraper = DiariasCollector(verbose=verbose, modo_busca=modo_busca)
     cidades_orgaos = scraper.cidades_orgaos
 
     if not cidades_orgaos:
@@ -74,7 +75,7 @@ def main():
             credor_nome = dados_empenhos[0]['Credor']
 
         excel_path = save_to_excel(dados_empenhos, credor_nome=credor_nome, ano_inicio='2025', ano_fim='2025', cidade='Bertópolis', orgao='Câmara Municipal de Bertópolis')
-        pdf_path = save_to_pdf(dados_empenhos, valor_total=500.0, credor_nome=credor_nome, ano_inicio='2025', ano_fim='2025', cidade='Bertópolis', orgao='Câmara Municipal de Bertópolis')
+        pdf_path = save_to_pdf(dados_empenhos, valor_total, credor_nome=credor_nome, ano_inicio='2025', ano_fim='2025', cidade='Bertópolis', orgao='Câmara Municipal de Bertópolis')
 
         console.print(f"\n[bold green]Relatório Excel salvo em:[/bold green] {excel_path}")
         console.print(f"[bold green]Relatório PDF salvo em:[/bold green] {pdf_path}")
