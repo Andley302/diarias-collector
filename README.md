@@ -30,28 +30,6 @@ Este projeto tem como objetivo facilitar o acesso e a análise dos dados públic
 
 Lembre-se que a transparência é importante, mas deve ser exercida com responsabilidade e respeito pela privacidade dentro do que é razoável em se tratando de dados públicos.
 
-## 🖼️ Capturas de Tela
-
-### Tela Inicial
-<p align="center">
-  <img src="screenshots/search.png" alt="Tela Inicial" width="700"/>
-</p>
-
-### Progresso de uma Busca
-<p align="center">
-  <img src="screenshots/progress.png" alt="Progresso da Busca" width="700"/>
-</p>
-
-### Resultado de uma Busca
-<p align="center">
-  <img src="screenshots/progress_ended.png" alt="Resultado da Busca" width="700"/>
-</p>
-
-### Arquivo PDF Gerado
-<p align="center">
-  <img src="screenshots/result.png" alt="Arquivo PDF Gerado" width="700"/>
-</p>
-
 ## 🖥️ Download e Execução
 
 ### 🪟 Windows
@@ -86,6 +64,29 @@ Você pode escolher entre baixar o **instalador** ou o **arquivo .zip**:
 **Observações:**
 - No Windows: Execute diretamente após entrar na pasta extraída (se instalado via .zip).
 - No Linux: Necessário dar permissão de execução como programa.
+
+## 🖼️ Capturas de Tela
+
+### Tela Inicial
+<p align="center">
+  <img src="screenshots/search.png" alt="Tela Inicial" width="700"/>
+</p>
+
+### Progresso de uma Busca
+<p align="center">
+  <img src="screenshots/progress.png" alt="Progresso da Busca" width="700"/>
+</p>
+
+### Resultado de uma Busca
+<p align="center">
+  <img src="screenshots/progress_ended.png" alt="Resultado da Busca" width="700"/>
+</p>
+
+### Arquivo PDF Gerado
+<p align="center">
+  <img src="screenshots/result.png" alt="Arquivo PDF Gerado" width="700"/>
+</p>
+
 ### Considerações Importantes
 
 #### Dados e Precisão
