@@ -73,7 +73,7 @@ Você pode escolher entre baixar o **instalador** ou o **arquivo .zip**:
 
 * Seguia os passos de compilação (clonar repositório, instalar dependências etc)
 
-### 🪟 Windows e Linux
+### 🪟 Windows
 ```bash
 cd DiariasCollector
 python app.py --terminal
