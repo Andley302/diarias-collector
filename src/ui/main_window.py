@@ -426,7 +426,7 @@ class ProgressScreen(QWidget):
             )
 
             if not pasta_usuario:
-                pasta_usuario = os.path.abspath(pasta_usuario)
+                pasta_usuario = os.path.abspath(str(desktop_path))
 
             os.makedirs(pasta_usuario, exist_ok=True)
 
