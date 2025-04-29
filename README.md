@@ -15,6 +15,21 @@ Este sistema é um web scraper especializado que organiza informações já púb
 - Consolidar dados dispersos em relatórios organizados
 - Automatizar a coleta de informações públicas
 
+## Uso Responsável e Considerações Éticas
+
+Este projeto tem como objetivo facilitar o acesso e a análise dos dados públicos de diárias em portais da transparência, promovendo o escrutínio público e a boa governança.
+
+**É fundamental que os usuários desta ferramenta a utilizem de forma ética e responsável.** Isso inclui:
+
+* **Respeitar os termos de serviço dos portais da transparência.**
+* **Evitar sobrecarregar os servidores dos portais com um número excessivo de requisições.** Implementar pausas entre as requisições é altamente recomendado.
+* **Utilizar os dados coletados de forma construtiva, para análise agregada e identificação de tendências, e não para fins de difamação, perseguição ou ataque pessoal a indivíduos.**
+* **Ter cautela ao divulgar informações específicas de indivíduos, mesmo que sejam dados públicos, e sempre considerar o impacto potencial dessa divulgação.**
+
+**O desenvolvedor deste projeto não se responsabiliza pelo uso indevido da ferramenta por terceiros.** Ao utilizar este software, você concorda em ser o único responsável pela forma como os dados são coletados, interpretados e utilizados.
+
+Lembre-se que a transparência é importante, mas deve ser exercida com responsabilidade e respeito pela privacidade dentro do que é razoável em se tratando de dados públicos.
+
 ## 🖼️ Capturas de Tela
 
 ### Tela Inicial
@@ -37,8 +52,7 @@ Este sistema é um web scraper especializado que organiza informações já púb
   <img src="screenshots/result.png" alt="Arquivo PDF Gerado" width="700"/>
 </p>
 
-### Download e Execução
-## 🖥️ Execução via Interface Gráfica
+## 🖥️ Download e Execução
 
 ### 🪟 Windows
 
@@ -69,30 +83,9 @@ Você pode escolher entre baixar o **instalador** ou o **arquivo .zip**:
 4. Abra a pasta extraída, procure o executável e clique com o botão direito no arquivo `DiariasCollector`, vá em **Propriedades > Permissões** e marque **"Permitir execução como programa"** (se necessário).
 5. Dê **dois cliques** no arquivo para executá-lo.
 
-## 💻 Execução via Terminal
-
-* Seguia os passos de compilação (clonar repositório, instalar dependências etc)
-
-### 🪟 Windows
-```bash
-cd DiariasCollector
-python app.py --terminal
-```
-
-### 🐧 Linux
-```bash
-cd DiariasCollector
-python3 app.py --terminal
-```
-
-### Visualização do Terminal
-![Terminal](screenshots/terminal.png)
-
 **Observações:**
-- No Windows: Execute diretamente após entrar na pasta extraída
-- No Linux: Necessário dar permissão de execução apenas na primeira vez
-- O terminal deve estar no diretório onde o arquivo foi extraído
-
+- No Windows: Execute diretamente após entrar na pasta extraída (se instalado via .zip).
+- No Linux: Necessário dar permissão de execução como programa.
 ### Considerações Importantes
 
 #### Dados e Precisão
@@ -116,17 +109,7 @@ python3 app.py --terminal
 
 ## Cidades e Portais Suportados
 
-Os sistema atualmente suporta os municípios e órgãos que usam o Portal da Transparência da Digitaliza (https://www.digitaliza.com.br). Veja a lista abaixo:
-
-### Machacalis
-- Prefeitura Municipal de Machacalis
-
-### Bertópolis
-- Prefeitura Municipal de Bertópolis
-- Câmara Municipal de Bertópolis
-
-### Umburatiba
-- Prefeitura Municipal de Umburatiba
+Os sistema atualmente suporta os municípios e órgãos que usam o Portal da Transparência da Digitaliza (https://www.digitaliza.com.br). Veja a lista de cidades disponíveis no [arquivo de cidades suportadas](resources/cidades.json) .
 
 ## Arquivos de Configuração
 Em `resources/`, você encontrará arquivos de configuração:
@@ -225,6 +208,8 @@ python app.py
 ```bash
 python app.py --terminal
 ```
+### Visualização do Terminal
+![Terminal](screenshots/terminal.png)
 
 ## Estrutura do Projeto
 ```
