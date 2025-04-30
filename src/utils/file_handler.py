@@ -106,6 +106,7 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
                 styles["Normal"]
             )
 
+            w2, h2 = empty_text.wrap(doc.width, doc.topMargin)
             empty_text.drawOn(canvas, doc.leftMargin, y_top - h - h2 - 2)
 
             canvas.restoreState()
