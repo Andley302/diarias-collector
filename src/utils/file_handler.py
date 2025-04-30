@@ -81,7 +81,6 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             spaceAfter=3
         )
 
-
         def header(canvas, doc):
             canvas.saveState()
             y_top = doc.pagesize[1] - 13
@@ -90,26 +89,25 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
                 f"<para alignment='center'><font size=8><b>Extraído por Diárias Collector v{VERSION}</b></font></para>",
                 styles["Normal"]
             )
-            w, h = header_text.wrap(doc.width, doc.topMargin)
-            header_text.drawOn(canvas, doc.leftMargin, y_top - h)
+            w, h1 = header_text.wrap(doc.width, doc.topMargin)
+            header_text.drawOn(canvas, doc.leftMargin, y_top - h1)
 
             github_text = Paragraph(
                 f"<para alignment='center'><font size='7'>Para mais detalhes, acesse o código fonte no <link href='{GITHUB_URL}'>GitHub</link>.</font></para>",
                 styles["Normal"]
             )
-
-            w2, h2 = github_text.wrap(doc.width, doc.topMargin)
-            github_text.drawOn(canvas, doc.leftMargin, y_top - h - h2 - 2)
+            w, h2 = github_text.wrap(doc.width, doc.topMargin)
+            github_text.drawOn(canvas, doc.leftMargin, y_top - h1 - h2 - 2)
 
             empty_text = Paragraph(
                 f"<para alignment='center'><font size=8><b>‎</b></font></para>",
                 styles["Normal"]
             )
-
-            w2, h2 = empty_text.wrap(doc.width, doc.topMargin)
-            empty_text.drawOn(canvas, doc.leftMargin, y_top - h - h2 - 2)
+            w, h3 = empty_text.wrap(doc.width, doc.topMargin)
+            empty_text.drawOn(canvas, doc.leftMargin, y_top - h1 - h2 - h3 - 4)
 
             canvas.restoreState()
+
 
         elements = [
             Spacer(1, 80),
