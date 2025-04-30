@@ -100,7 +100,7 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             github_text.drawOn(canvas, doc.leftMargin, y_top - h1 - h2 - 2)
 
             empty_text = Paragraph(
-                f"<para alignment='center'><font size=8><b>‎</b></font></para>",
+                f"<para alignment='center'><font size=8><b>ㅤ</b></font></para>",
                 styles["Normal"]
             )
             w, h3 = empty_text.wrap(doc.width, doc.topMargin)
