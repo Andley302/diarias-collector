@@ -99,13 +99,6 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             w, h2 = github_text.wrap(doc.width, doc.topMargin)
             github_text.drawOn(canvas, doc.leftMargin, y_top - h1 - h2 - 2)
 
-            empty_text = Paragraph(
-                f"<para alignment='center'><font size=8><b>ㅤ</b></font></para>",
-                styles["Normal"]
-            )
-            w, h3 = empty_text.wrap(doc.width, doc.topMargin)
-            empty_text.drawOn(canvas, doc.leftMargin, y_top - h1 - h2 - h3 - 4)
-
             canvas.restoreState()
 
 
@@ -175,13 +168,14 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             ])
 
             table.setStyle(style)
+            elements.append(Spacer(1, 40))
             elements.append(table)
 
         if not dados_empenhos or valor_total == 0:
             centered_style_empty = ParagraphStyle(
                 'CenteredStyle',
                 parent=normal_style,
-                alignment=TA_CENTER  # Alinha o texto horizontalmente ao centro
+                alignment=TA_CENTER 
             )
 
             mensagem = Paragraph("Nenhuma diária registrada no período informado.", centered_style_empty)
