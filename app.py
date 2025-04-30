@@ -1,10 +1,24 @@
 import sys
 
 def main():
+    args = sys.argv[1:] 
 
-    if len(sys.argv) > 1 and sys.argv[1] == "--terminal":
+    modo_terminal = "--terminal" in args 
+    verbose = False
+    modo_busca = "detalhada"   
+
+    if "--detalhada" in args:
+        modo_busca = "detalhada"
+
+    if "--rapida" in args:
+        modo_busca = "rapida"
+
+    if "--verbose" in args:
+        verbose = True
+
+    if modo_terminal:
         from src.cli.terminal_app import main as terminal_main
-        terminal_main()
+        terminal_main(verbose=verbose, modo_busca=modo_busca)
         return
 
     try:

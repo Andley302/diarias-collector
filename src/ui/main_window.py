@@ -3,8 +3,8 @@ import sys
 from PyQt6.QtWidgets import  (QMainWindow, QWidget, QVBoxLayout, 
                              QLabel, QComboBox, QLineEdit, QPushButton, 
                              QTextEdit, QMessageBox, QStackedWidget, QFormLayout, QApplication, QFileDialog, QCheckBox, QDialog, QMenuBar, QMenu, QTextBrowser)
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QDate, QUrl
-from PyQt6.QtGui import QFont, QIcon, QDesktopServices, QAction
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QDate, QUrl, QSettings
+from PyQt6.QtGui import QFont, QIcon, QDesktopServices, QAction, QTextCursor
 
 from src.core.scraper import DiariasCollector
 from src.utils import save_to_excel, save_to_pdf
@@ -14,12 +14,10 @@ from src.utils import obter_pasta_desktop
 from rich.console import Console
 from rich.logging import RichHandler
 import logging
-
-exibir_detalhes_log = False
+import re
 
 console = Console()
-
-nivel_log = logging.DEBUG if exibir_detalhes_log else logging.INFO
+nivel_log =  logging.INFO
 
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
@@ -37,23 +35,35 @@ class ScraperThread(QThread):
     update_signal = pyqtSignal(str, str)
     finished_signal = pyqtSignal(bool, str, list, float)
 
-    def __init__(self, cidade, orgao, ano_inicio, ano_fim, credor_nome):
+    def __init__(self, cidade, orgao, ano_inicio, ano_fim, credor_nome, verbose=False, modo_busca='detalhada'):
         super().__init__()
         self.cidade = cidade
         self.orgao = orgao
         self.ano_inicio = ano_inicio
         self.ano_fim = ano_fim
         self.credor_nome = credor_nome
+        self.verbose = verbose
+        self.modo_busca = modo_busca
 
     def run(self):
-        def callback(mensagem, empenho=None):
-            self.update_signal.emit(mensagem, empenho or "")
+            def callback(mensagem, empenho=None):
+                self.update_signal.emit(mensagem, empenho or "")
 
-        scraper = DiariasCollector(callback)
-        sucesso, mensagem, dados_empenhos, valor_total = scraper.buscar_diarias(
-            self.cidade, self.orgao, self.ano_inicio, self.ano_fim, self.credor_nome
-        )
-        self.finished_signal.emit(sucesso, mensagem, dados_empenhos, valor_total)
+            scraper = DiariasCollector(
+                callback=callback,
+                verbose=self.verbose,
+                modo_busca=self.modo_busca
+            )
+
+            try:
+                sucesso, mensagem, dados_empenhos, valor_total = scraper.buscar_diarias(
+                    self.cidade, self.orgao, self.ano_inicio, self.ano_fim, self.credor_nome, self.modo_busca, self.verbose)
+                self.finished_signal.emit(sucesso, mensagem, dados_empenhos, valor_total)
+            except Exception as e:
+                erro_mensagem = f"Ocorreu um erro durante a busca: {e}"
+                print(erro_mensagem) 
+                self.finished_signal.emit(False, erro_mensagem, {}, 0.0)
+
 
 class WelcomeScreen(QWidget):
     def __init__(self, controller):
@@ -144,14 +154,15 @@ class WelcomeScreen(QWidget):
 
 
 class SearchScreen(QWidget):
-    def __init__(self, controller):
+    def __init__(self, controller, verbose=False, modo_busca='detalhada'):
         super().__init__()
         self.controller = controller
+        self.verbose = verbose
+        self.modo_busca = modo_busca
         self.callback = None
-        self.scraper = DiariasCollector()
+        self.scraper = DiariasCollector(callback=self.callback, verbose=self.verbose, modo_busca=self.modo_busca)
         self.thread = None
-
-        self.setup_ui()  
+        self.setup_ui()
 
 
     def setup_ui(self):
@@ -235,71 +246,67 @@ class SearchScreen(QWidget):
             self.orgao_combo.addItems(self.scraper.cidades_orgaos[cidade].keys())
 
     def iniciar_busca(self):
-            if not self.scraper.cidades_orgaos:
-                QMessageBox.critical(
-                   self,
-                    "Erro ao carregar dados",
-                    "Não foi possível carregar a lista de cidades e órgãos. Verifique o arquivo JSON.")
-                return
+        if not self.scraper.cidades_orgaos:
+            QMessageBox.critical(
+                self,
+                "Erro ao carregar dados",
+                "Não foi possível carregar a lista de cidades e órgãos. Verifique o arquivo JSON.")
+            return
 
-            cidade = self.cidade_combo.currentText().strip()
-            orgao = self.orgao_combo.currentText().strip()
-            ano_inicio = self.ano_inicio_combo.currentText().strip()
-            ano_fim = self.ano_fim_combo.currentText().strip()
-            credor = self.credor_edit.text().strip()
+        cidade = self.cidade_combo.currentText().strip()
+        orgao = self.orgao_combo.currentText().strip()
+        ano_inicio = self.ano_inicio_combo.currentText().strip()
+        ano_fim = self.ano_fim_combo.currentText().strip()
+        credor = self.credor_edit.text().strip()
 
-            if not cidade:
-                QMessageBox.warning(self, "Campo obrigatório", "Selecione uma cidade.")
-                return
-            if not orgao:
-                QMessageBox.warning(self, "Campo obrigatório", "Selecione um órgão.")
-                return
-            if not ano_inicio or not ano_fim:
-                QMessageBox.warning(self, "Campo obrigatório", "Selecione o ano de início e fim.")
-                return
-            if int(ano_fim) < int(ano_inicio):
-                QMessageBox.warning(self, "Ano inválido", "O ano final não pode ser anterior ao ano inicial.")
-                return
-            if not credor:
-                QMessageBox.warning(self, "Campo obrigatório", "Digite o nome do credor.")
-                return
-    
+        if not cidade:
+            QMessageBox.warning(self, "Campo obrigatório", "Selecione uma cidade.")
+            return
+        if not orgao:
+            QMessageBox.warning(self, "Campo obrigatório", "Selecione um órgão.")
+            return
+        if not ano_inicio or not ano_fim:
+            QMessageBox.warning(self, "Campo obrigatório", "Selecione o ano de início e fim.")
+            return
+        if int(ano_fim) < int(ano_inicio):
+            QMessageBox.warning(self, "Ano inválido", "O ano final não pode ser anterior ao ano inicial.")
+            return
+        if not credor:
+            QMessageBox.warning(self, "Campo obrigatório", "Digite o nome do credor.")
+            return
 
-            valido, mensagem = self.scraper.validar_entrada(ano_inicio, ano_fim, credor)
-            if not valido:
-                 QMessageBox.warning(self, "Entrada Inválida", mensagem)
-                 return
+        valido, mensagem = self.scraper.validar_entrada(ano_inicio, ano_fim, credor)
+        if not valido:
+            QMessageBox.warning(self, "Entrada Inválida", mensagem)
+            return
 
-            self.controller.switch_to_progress_screen(cidade, orgao, ano_inicio, ano_fim, credor)
-
-
-from rich.text import Text
-from rich.console import Console
-
-import re
-from PyQt6.QtGui import QTextCursor
-
+            
+        self.controller.switch_to_progress_screen(cidade, orgao, ano_inicio, ano_fim, credor, self.verbose, self.modo_busca)
+        
 class LogHandler:
     def __init__(self, text_widget):
         self.text_widget = text_widget
         self.colors = {
             'SUCCESS': '#00FF00',
-            'INFO': '#FFFFFF', 
+            'INFO': '#FFFFFF',
             'WARNING': '#FFA500',
             'ERROR': '#FF0000'
         }
 
     def write(self, message):
         try:
-            if message.strip() and not self._is_http_log(message):
+            if message.strip():
+                if self._is_http_log(message):
+                    return
+
                 message = self._remove_rich_tags(message)
-                
+
                 if not message.endswith('\n'):
                     message += '\n'
-                
+
                 color = self._get_color(message)
                 html_message = f'<span style="color:{color}; white-space:pre-wrap;">{message}</span>'
-                
+
                 cursor = self.text_widget.textCursor()
                 cursor.movePosition(QTextCursor.MoveOperation.End)
                 cursor.insertHtml(html_message)
@@ -310,7 +317,7 @@ class LogHandler:
                 )
 
         except Exception as e:
-            self.text_widget.append(message)
+            self.text_widget.append(f"[ERRO NO LOG] {message}")
 
     def _remove_rich_tags(self, message):
         return re.sub(r'\[/?[a-zA-Z0-9_=#]+\]', '', message)
@@ -333,16 +340,22 @@ class LogHandler:
             "GET /",
             "HTTP/1.1",
             "Connected to",
-            "Starting new HTTP connection"
+            "Starting new HTTP connection",
+            "Retrying",
+            "Read timed out"
         ]
         return any(pattern in message for pattern in http_patterns)
 
-
 class ProgressScreen(QWidget):
-    def __init__(self, controller, callback=None):
+    def __init__(self, controller, verbose=False, modo_busca='detalhada', settings={}):
         super().__init__()
         self.controller = controller
-        self.callback = callback
+        self.callback = None
+        self.settings = settings
+
+        self.verbose = verbose
+        self.modo_busca = modo_busca
+        
         self.thread = None
 
         self.setup_ui()
@@ -396,7 +409,13 @@ class ProgressScreen(QWidget):
 
         self.thread = None
 
-    def iniciar_busca(self, cidade, orgao, ano_inicio, ano_fim, credor_nome):
+    def iniciar_busca(self, cidade, orgao, ano_inicio, ano_fim, credor_nome, verbose, modo_busca):
+        self.verbose = verbose
+        self.modo_busca = modo_busca
+
+        print(f"Modo de busca: {self.modo_busca}")
+        print(f"Verbose: {'Ativado' if self.verbose else 'Desativado'}")
+        
         self.info_label.setText(f"Buscando diárias de {credor_nome} em {cidade} - {orgao}")
         self.log_text.clear()
 
@@ -404,7 +423,23 @@ class ProgressScreen(QWidget):
             f"<br><b><font color='green'>Iniciando Busca...</font></b><br>"
         )
 
-        self.thread = ScraperThread(cidade, orgao, ano_inicio, ano_fim, credor_nome)
+        verbose = self.settings.value("verbose", False, type=bool)
+        modo_busca = self.settings.value("modo_busca", "rapida", type=str)
+
+        try:            
+            self.thread = ScraperThread(
+                cidade,
+                orgao,
+                ano_inicio,
+                ano_fim,
+                credor_nome,
+                verbose,
+                modo_busca,
+            )
+        except AttributeError as e:
+            self.log_text.append(f"<b><font color='red'>Erro ao iniciar busca:</font></b> {e}")
+            return
+
         self.thread.update_signal.connect(self.atualizar_progresso)
         self.thread.finished_signal.connect(self.busca_finalizada)
         self.thread.start()
@@ -514,6 +549,10 @@ class MainWindow(QMainWindow):
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
+        self.settings = QSettings("Diárias Collector", "DiariasCollectorApp")
+
+        self.verbose = self.settings.value("verbose", False, type=bool)
+        self.modo_busca = self.settings.value("modo_busca", "detalhada", type=str)
 
         self.setup_menu()
 
@@ -521,8 +560,9 @@ class MainWindow(QMainWindow):
         self.stack = QStackedWidget()
 
         self.welcome_screen = WelcomeScreen(controller=self)
-        self.search_screen = SearchScreen(controller=self)
-        self.progress_screen = ProgressScreen(controller=self)
+        self.search_screen = SearchScreen(controller=self, verbose=self.verbose, modo_busca=self.modo_busca)
+
+        self.progress_screen = ProgressScreen(controller=self, verbose=self.verbose, settings=self.settings)
 
         self.stack.addWidget(self.welcome_screen)
         self.stack.addWidget(self.search_screen)
@@ -539,20 +579,31 @@ class MainWindow(QMainWindow):
     def switch_to_search_screen(self):
         self.stack.setCurrentWidget(self.search_screen)
 
-    def switch_to_progress_screen(self, cidade, orgao, ano_inicio, ano_fim, credor_nome):
+    def switch_to_progress_screen(self, cidade, orgao, ano_inicio, ano_fim, credor_nome, verbose, modo_busca):
         self.stack.setCurrentWidget(self.progress_screen)
 
         self.progress_screen.cancelar_button.setText("Cancelar")
         self.progress_screen.cancelar_button.setStyleSheet("background-color: red; color: white;")
-    
+
         try:
-          self.progress_screen.cancelar_button.clicked.disconnect()
+            self.progress_screen.cancelar_button.clicked.disconnect()
         except TypeError:
-           pass
+            pass
+
+        try:
+            self.progress_screen.cancelar_button.clicked.connect(self.progress_screen.cancelar_busca)
+        except Exception as e:
+            print(f"Erro ao conectar o evento do botão cancelar: {str(e)}")
+            QMessageBox.critical(self, "Erro", f"Ocorreu um erro ao configurar o botão cancelar: {str(e)}")
+            return 
+
+        try:
+            self.progress_screen.iniciar_busca(cidade, orgao, ano_inicio, ano_fim, credor_nome, verbose, modo_busca)
+        except Exception as e:
+            print(f"Erro ao iniciar a busca na tela de progresso: {str(e)}")
+            QMessageBox.critical(self, "Erro", f"Ocorreu um erro ao iniciar a busca: {str(e)}")
+
         
-        self.progress_screen.cancelar_button.clicked.connect(self.progress_screen.cancelar_busca)
-        self.progress_screen.iniciar_busca(cidade, orgao, ano_inicio, ano_fim, credor_nome)
-    
     def exit_app(self):
       QApplication.quit()
 
@@ -601,7 +652,6 @@ class MainWindow(QMainWindow):
                 if reply == QMessageBox.StandardButton.Yes:
                     QDesktopServices.openUrl(QUrl(release_url))
             elif show_up_to_date_message:
-                # Only show this message for manual checks
                 QMessageBox.information(
                     self,
                     "Software Atualizado",
@@ -612,6 +662,35 @@ class MainWindow(QMainWindow):
 
     def setup_menu(self):
         menubar = self.menuBar()
+
+        config_menu = menubar.addMenu("Configurações")
+
+        self.logs_action = QAction("Logs detalhados", self, checkable=True)
+        self.logs_action.setChecked(self.verbose)
+        self.logs_action.triggered.connect(self.toggle_verbose)
+        
+        config_menu.addAction(self.logs_action)
+
+        self.busca_detalhada_action = QAction("Usar busca detalhada", self, checkable=True)
+        self.busca_detalhada_action.setChecked(self.modo_busca == "detalhada")
+        self.busca_detalhada_action.triggered.connect(self.toggle_modo_busca)
+        
+        config_menu.addAction(self.busca_detalhada_action)
+
+        config_menu.setStyleSheet("""
+            QMenu {
+            }
+
+            QMenu::item:selected {
+                background-color: #2196F3; 
+                color: white;
+            }
+
+            QMenu::item:checked {
+                background-color: #4CAF50; 
+                color: white;
+            }
+        """)
     
         how_it_works_menu = menubar.addMenu("Informações")
 
@@ -645,6 +724,17 @@ class MainWindow(QMainWindow):
         update_action.triggered.connect(lambda: self.check_for_updates(True))
         help_menu.addAction(update_action)
     
+    def toggle_verbose(self):
+        self.verbose = self.logs_action.isChecked()
+        self.settings.setValue("verbose", self.verbose)  
+        print(f"[DEBUG] Logs detalhados: {self.verbose}")
+    
+    def toggle_modo_busca(self):
+        self.modo_busca = "detalhada" if self.busca_detalhada_action.isChecked() else "rapida"
+        self.settings.setValue("modo_busca", self.modo_busca)  
+        print(f"[DEBUG] Modo de busca alterado para: {self.modo_busca}")
+
+
     def show_licenses_dialog(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Licenças de Software")

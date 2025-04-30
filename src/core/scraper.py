@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 import unicodedata
 import os
 from rich.console import Console
+import subprocess
+import platform
+from urllib.parse import urlparse
 
 def carregar_ou_criar_cidades():
     json_path = resource_path('resources/cidades_chave.json')
@@ -60,11 +63,22 @@ def resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
 class DiariasCollector:
-    def __init__(self, callback=None):
+    def __init__(self, callback=None, verbose=False, modo_busca='detalhada'):
         self.callback = callback
+        self.verbose = verbose
+        self.modo_busca = modo_busca
         self.console = Console()
+
         self.cidades_orgaos = self.carregar_cidades_orgaos()
 
+    def exibir_configuracoes(self):
+        conteudo = (
+            f"[bold cyan]Modo de Busca:[/bold cyan] [green]{self.modo_busca.capitalize()}[/green]\n"
+            f"[bold cyan]Logs detalhados:[/bold cyan] [green]{'Sim' if self.verbose else 'Não'}[/green]"
+        )
+        self.console.print(conteudo)
+
+        
     def atualizar_progresso(self, mensagem, empenho=None):
         if self.callback:
             self.callback(mensagem, empenho)
@@ -105,41 +119,75 @@ class DiariasCollector:
         
         return True, ""
 
-    def pegar_urls_empenhos(self, base_url):
+
+    def pegar_urls_empenhos(self, base_url, modo='detalhada', verbose=False):
         urls_empenhos = []
         self.atualizar_progresso(f"Acessando URL principal: {base_url}")
         
         try:
-            response = requests.get(base_url, timeout=30)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                links = soup.find_all('a', class_='btn_table')
-                
-                if links:
-                    for link in links:
-                        detalhe_url = link['href']
-                        url_parts = detalhe_url.split('/')
-                        if len(url_parts) >= 4:
-                            try:
-                                ano_empenho = int(url_parts[-3])
-                                mes_empenho = url_parts[-2]
-                                urls_empenhos.append({
-                                    'ano': ano_empenho,
-                                    'mes': mes_empenho,
-                                    'url': detalhe_url
-                                })
-                            except ValueError:
-                                self.atualizar_progresso(f"Ano ou mês inválido encontrado na URL: {detalhe_url}")
-                else:
-                    self.atualizar_progresso("Nenhum empenho encontrado na página principal.")
+            if modo == 'detalhada':
+                response = requests.get(base_url, timeout=30)
+
+                if verbose:
+                    parsed_url = urlparse(base_url)
+                    host_info = f"{parsed_url.hostname}:{parsed_url.port or 80 if parsed_url.scheme == 'http' else 443}"
+
+                    self.atualizar_progresso(
+                        f"[cyan][VERBOSE][/cyan] Requisição para {host_info} - Status {response.status_code}"
+                    )
+
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, 'html.parser')
+
+                    links = soup.find_all('a', class_='btn_table')
+                    if links:
+                        for link in links:
+                            detalhe_url = link['href']
+                            url_parts = detalhe_url.split('/')
+                            if len(url_parts) >= 4:
+                                try:
+                                    ano_empenho = int(url_parts[-3])
+                                    mes_empenho = url_parts[-2]
+                                    urls_empenhos.append({
+                                        'ano': ano_empenho,
+                                        'mes': mes_empenho,
+                                        'url': detalhe_url
+                                    })
+                                except ValueError:
+                                    self.atualizar_progresso(
+                                        f"Ano ou mês inválido encontrado na URL: {detalhe_url}"
+                                    )
+                    else:
+                        self.atualizar_progresso("Nenhum empenho encontrado na página principal.")
+
+            elif modo == 'rapida':
+                self.atualizar_progresso("[yellow]Busca rápida não disponível no momento. Usando busca detalhada...[/yellow]")
+                 
+                return self.pegar_urls_empenhos(base_url, modo='detalhada', verbose=verbose)
+                response = requests.get(base_url, timeout=30)
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, 'html.parser')
+
+                    filtro_div = soup.select_one('#DataTables_Table_0_filter')
+                    if filtro_div:
+                        input_search = filtro_div.select_one('input[type="search"]')
+                        if input_search:
+                            self.atualizar_progresso("Campo de pesquisa encontrado!")
+                        else:
+                            self.atualizar_progresso("Campo de pesquisa não encontrado dentro do filtro.")
+                            print("HTML do filtro:\n", filtro_div.prettify())
+                    else:
+                        self.atualizar_progresso("Div de filtro (#DataTables_Table_0_filter) não encontrada.")
+
             else:
-                self.atualizar_progresso(f"Erro ao acessar a URL principal: {base_url} - Código de status: {response.status_code}")
+                self.atualizar_progresso("Modo não reconhecido.")
+
         except Exception as e:
             self.atualizar_progresso(f"Erro ao acessar a URL principal: {str(e)}")
-        
+
         self.atualizar_progresso(f"Total de URLs de empenhos encontradas: {len(urls_empenhos)}")
         return urls_empenhos
-
+    
     def extrair_empenhos_palavras_chave(self, url_empenho, ano, mes, credor_nome):
         response = requests.get(url_empenho, timeout=30)
         
@@ -262,7 +310,7 @@ class DiariasCollector:
     def filtrar_empenhos_por_ano(self, empenhos, ano_inicio, ano_fim):
         return [empenho for empenho in empenhos if ano_inicio <= empenho['ano'] <= ano_fim]
 
-    def buscar_diarias(self, cidade, orgao, ano_inicio, ano_fim, credor_nome):
+    def buscar_diarias(self, cidade, orgao, ano_inicio, ano_fim, credor_nome, modo='detalhada', verbose=False):
         valido, mensagem = self.validar_entrada(ano_inicio, ano_fim, credor_nome)
         if not valido:
             self.atualizar_progresso(mensagem)
@@ -279,10 +327,13 @@ class DiariasCollector:
             return False, f"Órgão '{orgao}' não encontrado para a cidade '{cidade}'.", None, None
         
         base_url = orgaos[orgao]
+
+        self.exibir_configuracoes()
         
         self.atualizar_progresso(f"🔍 Buscando empenhos do órgão {orgao} - {cidade}")
-        empenhos = self.pegar_urls_empenhos(base_url)
-        
+        empenhos = self.pegar_urls_empenhos(base_url, modo, verbose)
+
+    
         empenhos_filtrados = self.filtrar_empenhos_por_ano(empenhos, ano_inicio, ano_fim)
         self.atualizar_progresso(f"Encontrados {len(empenhos_filtrados)} meses no período {ano_inicio}-{ano_fim}")
         

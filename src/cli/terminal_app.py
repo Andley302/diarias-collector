@@ -2,8 +2,9 @@ import os
 import sys
 from rich import print
 from rich.console import Console
-from rich.prompt import Prompt
+from rich.prompt import Prompt, Confirm
 from rich.panel import Panel
+from src.utils.version import VERSION, GITHUB_URL
 from src.core.scraper import DiariasCollector
 from src.utils import save_to_excel, save_to_pdf
 
@@ -39,9 +40,33 @@ def perguntar_credor():
             return credor
         console.print(Panel("[bold red]Erro: O nome do credor não pode estar vazio.[/bold red]", style="red"))
 
-def main(verbose=False, modo_busca='rapida'):
+
+def main(verbose=False, modo_busca='detalhada'):
     console = Console()
-    
+
+    titulo = f"[bold cyan]📄 Diárias Collector v{VERSION}[/bold cyan]"
+    console.print(Panel(titulo, expand=False, border_style="bright_blue"))
+
+    termos = (
+        "[bold yellow]Termos de Uso[/bold yellow]\n"
+        "Este programa acessa portais públicos para consultar e processar dados de diárias.\n"
+        "Ao utilizá-lo, você concorda em assumir responsabilidade pelo uso, verificar os dados nas fontes oficiais\n"
+        "e evitar qualquer uso que possa comprometer a integridade ou imagem de terceiros."
+    )
+
+    console.print(Panel(termos, border_style="yellow"))
+
+    if not Confirm.ask("[bold green]Você aceita os termos de uso?[/bold green]"):
+        console.print("[red]Operação cancelada pelo usuário.[/red]")
+        return
+
+    titulo = f"[bold cyan]📄 Diárias Collector v{VERSION}[/bold cyan]"
+    console.print(Panel(titulo, expand=False, border_style="bright_blue"))
+
+    console.print(
+        f"\n[blue]Verifique sempre por atualizações em:[/blue] [underline]{GITHUB_URL}[/underline]\n"
+    )
+
     scraper = DiariasCollector(verbose=verbose, modo_busca=modo_busca)
     cidades_orgaos = scraper.cidades_orgaos
 
@@ -65,18 +90,33 @@ def main(verbose=False, modo_busca='rapida'):
     os.makedirs(base_dir, exist_ok=True)
 
     sucesso, mensagem, dados_empenhos, valor_total = scraper.buscar_diarias(
-        cidade_selecionada, orgao_selecionado, ano_inicio, ano_fim, credor_nome
+        cidade_selecionada, orgao_selecionado, ano_inicio, ano_fim, credor_nome, modo_busca, verbose
     )
 
     if sucesso:
         if not dados_empenhos or len(dados_empenhos) == 0:
-            credor_nome = credor_nome
+            credor_nome_final = credor_nome
         else:
-            credor_nome = dados_empenhos[0]['Credor']
+            credor_nome_final = dados_empenhos[0]['Credor']
 
-        excel_path = save_to_excel(dados_empenhos, credor_nome=credor_nome, ano_inicio='2025', ano_fim='2025', cidade='Bertópolis', orgao='Câmara Municipal de Bertópolis')
-        pdf_path = save_to_pdf(dados_empenhos, valor_total, credor_nome=credor_nome, ano_inicio='2025', ano_fim='2025', cidade='Bertópolis', orgao='Câmara Municipal de Bertópolis')
+        excel_path = save_to_excel(
+            dados_empenhos,
+            credor_nome=credor_nome_final,
+            ano_inicio=ano_inicio,
+            ano_fim=ano_fim,
+            cidade=cidade_selecionada,
+            orgao=orgao_selecionado
+         )
 
+        pdf_path = save_to_pdf(
+            dados_empenhos,
+            valor_total,
+            credor_nome=credor_nome_final,
+            ano_inicio=ano_inicio,
+            ano_fim=ano_fim,
+            cidade=cidade_selecionada,
+            orgao=orgao_selecionado
+        )
         console.print(f"\n[bold green]Relatório Excel salvo em:[/bold green] {excel_path}")
         console.print(f"[bold green]Relatório PDF salvo em:[/bold green] {pdf_path}")
         console.print(f"\n[italic green]{mensagem}[/italic green]")
