@@ -448,7 +448,7 @@ class ProgressScreen(QWidget):
         if empenho:
            self.empenho_label.setText(
                 f"<br>Número do empenho: {empenho}<br><br>"
-                f"<b><font color='orange'>Esse processo pode demorar de minutos a horas, "
+                f"<b><font color='orange'>Esse processo pode demorar de minutos a horas,<br> "
                 "a depender da quantidade de anos selecionados e das diárias no portal. Aguarde!</font></b><br>"
             )
 
@@ -626,14 +626,7 @@ class MainWindow(QMainWindow):
                 event.ignore() 
 
     def confirmar_saida(self):
-        reply = QMessageBox.question(
-            self,
-            "Confirmação",
-            "Deseja realmente sair?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if reply == QMessageBox.StandardButton.Yes:
-            QApplication.quit()  
+        QApplication.quit() 
 
     def abrir_pdf_no_navegador(self, link):
       caminho_absoluto = os.path.abspath(link)

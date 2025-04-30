@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import unicodedata
 import os
 from rich.console import Console
-import subprocess
-import platform
 from urllib.parse import urlparse
 
 def carregar_ou_criar_cidades():
