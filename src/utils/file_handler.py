@@ -168,7 +168,7 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             ])
 
             table.setStyle(style)
-            elements.append(Spacer(1, 40))
+            elements.append(Spacer(1, 10))
             elements.append(table)
 
         if not dados_empenhos or valor_total == 0:
