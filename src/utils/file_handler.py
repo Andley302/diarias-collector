@@ -101,6 +101,13 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             w2, h2 = github_text.wrap(doc.width, doc.topMargin)
             github_text.drawOn(canvas, doc.leftMargin, y_top - h - h2 - 2)
 
+            empty_text = Paragraph(
+                f"<para alignment='center'><font size=8><b>‎</b></font></para>",
+                styles["Normal"]
+            )
+
+            empty_text.drawOn(canvas, doc.leftMargin, y_top - h - h2 - 2)
+
             canvas.restoreState()
 
         elements = [
