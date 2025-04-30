@@ -57,7 +57,7 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
         doc = SimpleDocTemplate(
             pdf_file_path,
             pagesize=letter,
-            topMargin=30,
+            topMargin=40,
             leftMargin=30,
             rightMargin=30,
             bottomMargin=30
