@@ -328,7 +328,7 @@ class DiariasCollector:
         
         base_url = orgaos[orgao]
 
-        self.exibir_configuracoes()
+        #self.exibir_configuracoes()
         
         self.atualizar_progresso(f"🔍 Buscando empenhos do órgão {orgao} - {cidade}")
         empenhos = self.pegar_urls_empenhos(base_url, modo, verbose)

@@ -207,8 +207,17 @@ python app.py
 
 ### Terminal
 ```bash
-python app.py --terminal
+python app.py --terminal [--detalhada | --rapida] [--verbose]
 ```
+## Argumentos disponíveis
+
+| Argumento       | Descrição                                                                |
+|-----------------|--------------------------------------------------------------------------|
+| `--terminal`    | Executa a aplicação em modo terminal (obrigatório para interface CLI)    |
+| `--detalhada`   | Usa o modo de busca detalhada (padrão - mais confiável)                  |
+| `--rapida`      | Usa o modo de busca rápida (ainda não está funcionando, usará a padrão)  |
+| `--verbose`     | Exibe logs detalhados, como requisições HTTP e respostas dos portais     |
+
 ### Visualização do Terminal
 ![Terminal](screenshots/terminal.png)
 

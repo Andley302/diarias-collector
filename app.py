@@ -1,20 +1,24 @@
 import sys
+import argparse
 
 def main():
-    args = sys.argv[1:] 
+    parser = argparse.ArgumentParser(description="Diárias Collector - Coleta de diárias e viagens de portais públicos.")
+    
+    parser.add_argument("--terminal", action="store_true", help="Executa a aplicação em modo terminal.")
+    parser.add_argument("--detalhada", action="store_true", help="Usa o modo de busca detalhada (padrão).")
+    parser.add_argument("--rapida", action="store_true", help="Usa o modo de busca rápida (ainda não funcional, usará detalhada).")
+    parser.add_argument("--verbose", action="store_true", help="Exibe logs detalhados.")
 
-    modo_terminal = "--terminal" in args 
-    verbose = False
-    modo_busca = "detalhada"   
+    args = parser.parse_args()
 
-    if "--detalhada" in args:
-        modo_busca = "detalhada"
+    modo_busca = "detalhada"
+    verbose = args.verbose
+    modo_terminal = args.terminal
 
-    if "--rapida" in args:
+    if args.rapida:
         modo_busca = "rapida"
-
-    if "--verbose" in args:
-        verbose = True
+    elif args.detalhada:
+        modo_busca = "detalhada"
 
     if modo_terminal:
         from src.cli.terminal_app import main as terminal_main

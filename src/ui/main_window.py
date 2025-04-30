@@ -413,8 +413,8 @@ class ProgressScreen(QWidget):
         self.verbose = verbose
         self.modo_busca = modo_busca
 
-        print(f"Modo de busca: {self.modo_busca}")
-        print(f"Verbose: {'Ativado' if self.verbose else 'Desativado'}")
+        #print(f"Modo de busca: {self.modo_busca}")
+        #print(f"Verbose: {'Ativado' if self.verbose else 'Desativado'}")
         
         self.info_label.setText(f"Buscando diárias de {credor_nome} em {cidade} - {orgao}")
         self.log_text.clear()
@@ -446,10 +446,11 @@ class ProgressScreen(QWidget):
 
     def atualizar_progresso(self, mensagem, empenho=None):
         if empenho:
-            self.empenho_label.setText(
-               f"<br>Número do empenho: {empenho}<br><br>"
-               f"<b><font color='orange'>Esse processo pode demorar MUITO. Aguarde!</font></b><br>"
-           )
+           self.empenho_label.setText(
+                f"<br>Número do empenho: {empenho}<br><br>"
+                f"<b><font color='orange'>Esse processo pode demorar de minutos a horas, "
+                "a depender da quantidade de anos selecionados e das diárias no portal. Aguarde!</font></b><br>"
+            )
 
         self.logger.info(mensagem)
 
@@ -458,6 +459,11 @@ class ProgressScreen(QWidget):
         try:
 
             desktop_path = obter_pasta_desktop()
+
+            if not dados_empenhos or len(dados_empenhos) == 0:
+                credor_nome_final = self.thread.credor_nome
+            else:
+                credor_nome_final = dados_empenhos[0]['Credor']
 
             pasta_usuario = QFileDialog.getExistingDirectory(
                 None,  
@@ -473,7 +479,7 @@ class ProgressScreen(QWidget):
 
             excel_path = save_to_excel(
                 dados_empenhos, 
-                credor_nome=self.thread.credor_nome,
+                credor_nome=credor_nome_final,
                 ano_inicio=self.thread.ano_inicio, 
                 ano_fim=self.thread.ano_fim,
                 cidade=self.thread.cidade,
@@ -484,7 +490,7 @@ class ProgressScreen(QWidget):
             pdf_path = save_to_pdf(
                 dados_empenhos,
                 valor_total=valor_total,
-                credor_nome=self.thread.credor_nome,
+                credor_nome=credor_nome_final,
                 ano_inicio=self.thread.ano_inicio,
                 ano_fim=self.thread.ano_fim,
                 cidade=self.thread.cidade,
@@ -606,6 +612,18 @@ class MainWindow(QMainWindow):
         
     def exit_app(self):
       QApplication.quit()
+
+    def closeEvent(self, event):
+            reply = QMessageBox.question(
+                self,
+                "Confirmação",
+                "Deseja realmente sair?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                event.accept() 
+            else:
+                event.ignore() 
 
     def confirmar_saida(self):
         reply = QMessageBox.question(
@@ -730,8 +748,18 @@ class MainWindow(QMainWindow):
         print(f"[DEBUG] Logs detalhados: {self.verbose}")
     
     def toggle_modo_busca(self):
+        if not self.busca_detalhada_action.isChecked():
+            QMessageBox.warning(
+                self, 
+                "Modo Rápido Indisponível", 
+                "O modo de busca rápida ainda não está disponível. Será utilizado o modo detalhado.",
+                QMessageBox.StandardButton.Ok
+            )
+            self.settings.setValue("modo_busca", "detalhada")
+            return 
+
         self.modo_busca = "detalhada" if self.busca_detalhada_action.isChecked() else "rapida"
-        self.settings.setValue("modo_busca", self.modo_busca)  
+        self.settings.setValue("modo_busca", self.modo_busca)
         print(f"[DEBUG] Modo de busca alterado para: {self.modo_busca}")
 
 
