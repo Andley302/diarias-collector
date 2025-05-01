@@ -122,6 +122,33 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             Spacer(1, 24)
         ]
 
+        if cidade.lower() == "pavão":
+            warning_style = ParagraphStyle(
+                'WarningStyle',
+                parent=styles['Normal'],
+                alignment=0,  
+                textColor=colors.red,
+                fontSize=10,
+                spaceBefore=0,
+                spaceAfter=12,
+            )
+            warning_text = "ATENÇÃO: Os dados podem conter imprecisões, duplicidades ou ausências, pois ainda estão em fase de testes. A responsabilidade pelo uso e divulgação deste relatório é exclusivamente de quem o compartilha, inclusive quanto às possíveis consequências decorrentes desse uso."
+            elements.append(Paragraph(warning_text, warning_style))
+            elements.append(Spacer(1, 10))
+        else:
+            disclaimer_style = ParagraphStyle(
+                'DisclaimerStyle',
+                parent=styles['Normal'],
+                alignment=0, 
+                textColor=colors.black,
+                fontSize=10,
+                spaceBefore=0,
+                spaceAfter=12,
+                )
+            disclaimer_text = "ATENÇÃO: Qualquer pessoa que divulgar este relatório assume total responsabilidade por seus efeitos. O autor da ferramenta não se responsabiliza pelo uso das informações para causar prejuízos, exposição indevida ou danos à imagem de terceiros."
+            elements.append(Paragraph(disclaimer_text, disclaimer_style))
+            elements.append(Spacer(1, 10))
+                
         total_width = doc.width 
         col_widths = [
             0.12 * total_width,  

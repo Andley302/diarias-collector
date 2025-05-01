@@ -1,6 +1,5 @@
 import requests
 import json
-import time
 import urllib.parse
 import re
 from datetime import datetime, timedelta
@@ -104,7 +103,7 @@ class MemoryApi(BasePortal):
                 
                 if self.verbose:
                     self.atualizar_progresso(
-                        f"[cyan][DEBUG] Cookies setados após configuração manual[/cyan]",
+                        f"[cyan][DEBUG] Cookies setados após configuração pré-definida.[/cyan]",
                         None, None, self.total_empenhos, self.total_meses
                     )
                 

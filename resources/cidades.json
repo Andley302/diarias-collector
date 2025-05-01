@@ -29,7 +29,7 @@
             "timeout": 5
         }
     },
-    "Pavão (em teste — resultados sujeitos a imprecisão)": {
+    "Pavão": {
         "Prefeitura Municipal de Pavão": {
             "modelo_portal": "memory",
             "metodo_busca": "api",

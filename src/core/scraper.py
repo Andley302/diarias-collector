@@ -90,7 +90,7 @@ class DiariasCollector:
         modelo_portal = orgao_config.get('modelo_portal', '').lower()
         metodo_busca = orgao_config.get('metodo_busca', '').lower()
         url_base = orgao_config.get('url_base', '')
-        timeout = orgao_config.get('timeout')  # Get timeout from config
+        timeout = orgao_config.get('timeout') 
 
         try:
             timeout = int(orgao_config.get('timeout', 7))
