@@ -3,26 +3,30 @@
         "Prefeitura Municipal de Bertópolis": {
             "modelo_portal": "digitaliza",
             "metodo_busca": "diaria",
-            "url_base": "https://www.bertopolis.mg.gov.br/transparencia/diarias"
+            "url_base": "https://www.bertopolis.mg.gov.br/transparencia/diarias",
+            "timeout": 5
         },
         "Câmara Municipal de Bertópolis": {
             "modelo_portal": "digitaliza",
             "metodo_busca": "empenho",
-            "url_base": "https://www.camarabertopolis.mg.gov.br/transparencia/empenhos"
+            "url_base": "https://www.camarabertopolis.mg.gov.br/transparencia/empenhos",
+            "timeout": 5
         }
     },
     "Machacalis": {
         "Prefeitura Municipal de Machacalis": {
             "modelo_portal": "memory",
             "metodo_busca": "diaria",
-            "url_base": "https://www.machacalis.mg.gov.br/transparencia/diarias"
+            "url_base": "https://www.machacalis.mg.gov.br/transparencia/diarias",
+            "timeout": 5
         }
     },
     "Umburatiba": {
         "Prefeitura Municipal de Umburatiba": {
             "modelo_portal": "digitaliza",
             "metodo_busca": "diaria",
-            "url_base": "https://www.umburatiba.mg.gov.br/transparencia/diarias"
+            "url_base": "https://www.umburatiba.mg.gov.br/transparencia/diarias",
+            "timeout": 5
         }
     }
 }

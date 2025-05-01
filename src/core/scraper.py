@@ -91,6 +91,10 @@ class DiariasCollector:
         modelo_portal = orgao_config.get('modelo_portal', '').lower()
         metodo_busca = orgao_config.get('metodo_busca', '').lower()
         url_base = orgao_config.get('url_base', '')
+        timeout = orgao_config.get('timeout', 7)
+
+        if timeout <= 0:
+            timeout = 7
         
         if not modelo_portal or not metodo_busca or not url_base:
             self.atualizar_progresso(f"[bold red]❌ Configuração incompleta para o órgão '{orgao}'.[/bold red]")
@@ -110,7 +114,7 @@ class DiariasCollector:
         self.atualizar_progresso(f"[bold blue]🔍 Buscando diárias em {orgao} - {cidade} via {modelo_portal}/{metodo_busca}[/bold blue]")
         
         try:
-            valor_total, dados_empenhos = portal_scraper.buscar_diarias(url_base, ano_inicio, ano_fim, credor_nome)
+            valor_total, dados_empenhos = portal_scraper.buscar_diarias(url_base, ano_inicio, ano_fim, credor_nome, timeout)
             
             primeiro_credor = credor_nome
             if dados_empenhos:
@@ -124,7 +128,7 @@ class DiariasCollector:
                 )
                 return True, "", dados_empenhos, valor_total 
             else:
-                mensagem_final = f"Nenhum valor encontrado para o credor '{primeiro_credor}' no período de {periodo}."
+                mensagem_final = f" Nenhum valor encontrado para o credor '{primeiro_credor}' no período de {periodo}."
                 self.atualizar_progresso(f"[bold yellow]⚠️ {mensagem_final}[/bold yellow]")
                 return True, mensagem_final, [], 0.0
                 

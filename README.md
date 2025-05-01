@@ -122,7 +122,8 @@ Mapeia as cidades e seus respectivos órgãos aos portais de transparência, inc
     "Órgão": {
       "modelo_portal": "digitaliza",
       "metodo_busca": "empenho",
-      "url_base": "URL do portal de transparência"
+      "url_base": "URL do portal de transparência",
+      "timeout": 10
     }
   }
 }
@@ -131,6 +132,8 @@ Mapeia as cidades e seus respectivos órgãos aos portais de transparência, inc
 
 - `modelo_portal`: indica o nome da pasta em `src/core/portais/` onde está a lógica de scraping para um portal (ex: digitaliza, memory, etc).
 - `metodo_busca`: define se será usado o método de busca por diaria dentro do portal (em digitaliza, por exemplo, existe uma página apenas para diárias e outra para todos empenhos). O arquivo .py terá o nome do método de busca.
+- `url_base`: URL base do portal de transparência.
+- `timeout`: tempo limite para requisições HTTP.
 
 ### cidades_chave.json
 Lista de cidades-chave para filtrar destinos de viagens:

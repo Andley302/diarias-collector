@@ -89,43 +89,53 @@ def main(verbose=False):
     base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "relatorios")
     os.makedirs(base_dir, exist_ok=True)
 
-    sucesso, mensagem, dados_empenhos, valor_total = scraper.buscar_diarias(
-        cidade_selecionada, orgao_selecionado, ano_inicio, ano_fim, credor_nome, verbose
-    )
-
-    if sucesso:
-        if not dados_empenhos or len(dados_empenhos) == 0:
-            credor_nome_final = credor_nome
-        else:
-            credor_nome_final = dados_empenhos[0]['Credor']
-
-        excel_path = save_to_excel(
-            dados_empenhos,
-            credor_nome=credor_nome_final,
-            ano_inicio=ano_inicio,
-            ano_fim=ano_fim,
-            cidade=cidade_selecionada,
-            orgao=orgao_selecionado
-         )
-
-        pdf_path = save_to_pdf(
-            dados_empenhos,
-            valor_total,
-            credor_nome=credor_nome_final,
-            ano_inicio=ano_inicio,
-            ano_fim=ano_fim,
-            cidade=cidade_selecionada,
-            orgao=orgao_selecionado
+    try:
+        sucesso, mensagem, dados_empenhos, valor_total = scraper.buscar_diarias(
+            cidade_selecionada, orgao_selecionado, ano_inicio, ano_fim, credor_nome, verbose
         )
-        console.print(f"\n[bold green]Relatório Excel salvo em:[/bold green] {excel_path}")
-        console.print(f"[bold green]Relatório PDF salvo em:[/bold green] {pdf_path}")
-        if mensagem:
-          console.print(f"\n[italic green]{mensagem}[/italic green]")
-        else:
-          console.print(f"\n")
 
-    else:
-        console.print(Panel(f"[bold red]Erro:[/bold red] {mensagem}", style="red"))
+        if not sucesso:
+            #console.print(Panel(
+            #    f"[bold red]❌ {mensagem}[/bold red]\n\n"
+            #    "[yellow]Verifique sua conexão e tente novamente.[/yellow]",
+            #    title="Erro na Busca",
+            #    style="red"
+            #))
+            return
+
+        if valor_total > 0 or not mensagem: 
+            if not dados_empenhos or len(dados_empenhos) == 0:
+                credor_nome_final = credor_nome
+            else:
+                credor_nome_final = dados_empenhos[0]['Credor']
+
+            excel_path = save_to_excel(
+                dados_empenhos,
+                credor_nome=credor_nome_final,
+                ano_inicio=ano_inicio,
+                ano_fim=ano_fim,
+                cidade=cidade_selecionada,
+                orgao=orgao_selecionado
+             )
+
+            pdf_path = save_to_pdf(
+                dados_empenhos,
+                valor_total,
+                credor_nome=credor_nome_final,
+                ano_inicio=ano_inicio,
+                ano_fim=ano_fim,
+                cidade=cidade_selecionada,
+                orgao=orgao_selecionado
+            )
+            console.print(f"\n[bold green]Relatório Excel salvo em:[/bold green] {excel_path}")
+            console.print(f"[bold green]Relatório PDF salvo em:[/bold green] {pdf_path}")
+            if mensagem:
+               console.print(f"\n[italic green]{mensagem}[/italic green]")
+            else:
+               console.print(f"\n[bold green]Sucesso![/bold green]")
+
+    except Exception as e:
+        console.print(Panel(f"[bold red]Erro:[/bold red] {str(e)}", style="red"))
 
 if __name__ == "__main__":
     main()

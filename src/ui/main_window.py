@@ -336,7 +336,7 @@ class LogHandler:
         return None
 
     def _remove_rich_tags(self, message):
-        message = re.sub(r'[✅❌⚠️🔍]', '', message)
+        #message = re.sub(r'[✅❌⚠️🔍]', '', message)
         message = re.sub(r'\[/?(?:bold\s+)?[a-zA-Z0-9_=#]+\]', '', message)
         return message
 
@@ -467,72 +467,89 @@ class ProgressScreen(QWidget):
         self.logger.info(mensagem)
 
     def busca_finalizada(self, sucesso, mensagem, dados_empenhos, valor_total):
-     if sucesso:
-        try:
-
-            desktop_path = obter_pasta_desktop()
-
-            if not dados_empenhos or len(dados_empenhos) == 0:
-                credor_nome_final = self.thread.credor_nome
-            else:
-                credor_nome_final = dados_empenhos[0]['Credor']
-
-            pasta_usuario = QFileDialog.getExistingDirectory(
-                None,  
-                "Escolha o diretório para salvar os relatórios",  
-                str(desktop_path), 
-                QFileDialog.Option.ShowDirsOnly  
+        if not sucesso:
+            QMessageBox.critical(
+                None,
+                "Erro na Busca",
+                f"A busca foi interrompida devido a um erro:\n\n{mensagem}\n\n"
+                "Verifique sua conexão e tente novamente."
             )
-
-            if not pasta_usuario:
-                pasta_usuario = os.path.abspath(str(desktop_path))
-
-            os.makedirs(pasta_usuario, exist_ok=True)
-
-            excel_path = save_to_excel(
-                dados_empenhos, 
-                credor_nome=credor_nome_final,
-                ano_inicio=self.thread.ano_inicio, 
-                ano_fim=self.thread.ano_fim,
-                cidade=self.thread.cidade,
-                orgao=self.thread.orgao,
-                path_destino=pasta_usuario  
-            )
-
-            pdf_path = save_to_pdf(
-                dados_empenhos,
-                valor_total=valor_total,
-                credor_nome=credor_nome_final,
-                ano_inicio=self.thread.ano_inicio,
-                ano_fim=self.thread.ano_fim,
-                cidade=self.thread.cidade,
-                orgao=self.thread.orgao,
-                path_destino=pasta_usuario  
-            )
-
             self.cancelar_button.setText("Voltar")
             self.cancelar_button.setStyleSheet("background-color: blue; color: white;")
             self.cancelar_button.clicked.disconnect()
             self.cancelar_button.clicked.connect(self.controller.switch_to_search_screen)
+            return
 
-            self.empenho_label.setText(
-            f"<br><b><font color='green'>Arquivos salvos com sucesso!</font></b><br>"
-            f"<a href='{pdf_path}'>Clique aqui para abrir o PDF</a><br>"
-            )
-        
-            self.empenho_label.setOpenExternalLinks(False)  
-            self.empenho_label.linkActivated.connect(self.controller.abrir_pdf_no_navegador)  
+        try:
+            if valor_total > 0 or not mensagem: 
+                desktop_path = obter_pasta_desktop()
 
-            if excel_path: 
-                self.logger.info(f"\nRelatório Excel salvo em: {excel_path}")
-            self.logger.info(f"Relatório PDF salvo em: {pdf_path}")
+                if not dados_empenhos or len(dados_empenhos) == 0:
+                    credor_nome_final = self.thread.credor_nome
+                else:
+                    credor_nome_final = dados_empenhos[0]['Credor']
 
-            QMessageBox.information(None, "Sucesso", f"Relatórios salvos em:\n{pasta_usuario}")
+                pasta_usuario = QFileDialog.getExistingDirectory(
+                    None,  
+                    "Escolha o diretório para salvar os relatórios",  
+                    str(desktop_path), 
+                    QFileDialog.Option.ShowDirsOnly  
+                )
+
+                if not pasta_usuario:
+                    pasta_usuario = os.path.abspath(str(desktop_path))
+
+                os.makedirs(pasta_usuario, exist_ok=True)
+
+                excel_path = save_to_excel(
+                    dados_empenhos, 
+                    credor_nome=credor_nome_final,
+                    ano_inicio=self.thread.ano_inicio, 
+                    ano_fim=self.thread.ano_fim,
+                    cidade=self.thread.cidade,
+                    orgao=self.thread.orgao,
+                    path_destino=pasta_usuario  
+                )
+
+                pdf_path = save_to_pdf(
+                    dados_empenhos,
+                    valor_total=valor_total,
+                    credor_nome=credor_nome_final,
+                    ano_inicio=self.thread.ano_inicio,
+                    ano_fim=self.thread.ano_fim,
+                    cidade=self.thread.cidade,
+                    orgao=self.thread.orgao,
+                    path_destino=pasta_usuario  
+                )
+
+                self.cancelar_button.setText("Voltar")
+                self.cancelar_button.setStyleSheet("background-color: blue; color: white;")
+                self.cancelar_button.clicked.disconnect()
+                self.cancelar_button.clicked.connect(self.controller.switch_to_search_screen)
+
+                self.empenho_label.setText(
+                f"<br><b><font color='green'>Arquivos salvos com sucesso!</font></b><br>"
+                f"<a href='{pdf_path}'>Clique aqui para abrir o PDF</a><br>"
+                )
+            
+                self.empenho_label.setOpenExternalLinks(False)  
+                self.empenho_label.linkActivated.connect(self.controller.abrir_pdf_no_navegador)  
+
+                if excel_path: 
+                    self.logger.info(f"\n\n[blue]📊 Relatório Excel salvo em: {excel_path}[/blue]")
+                if pdf_path:
+                    self.logger.info(f"[blue]📄 Relatório PDF salvo em: {pdf_path}[/blue]")
+
+                if excel_path and pdf_path:
+                    self.logger.info(f"[bold green]\n\n✅ Sucesso![/bold green]")
+
+
+                QMessageBox.information(None, "Sucesso", f"Relatórios salvos em:\n{pasta_usuario}")
 
         except Exception as e:
             self.logger.error(f"\nErro ao salvar relatórios: {str(e)}")
             QMessageBox.critical(None, "Erro", f"Erro ao salvar relatórios: {str(e)}")
-        
+            
             self.cancelar_button.setText("Voltar")
             self.cancelar_button.setStyleSheet("background-color: blue; color: white;")
             self.cancelar_button.clicked.disconnect()
@@ -644,7 +661,8 @@ class MainWindow(QMainWindow):
     
       if os.path.exists(caminho_absoluto):
           url = QUrl.fromLocalFile(caminho_absoluto)
-          print(f"Abrindo PDF no navegador: {url.toString()}")
+          self.logger.info(f"[blue]🌎 Abrindo PDF no navegador: {url.toString()}[/blue]")
+
           QDesktopServices.openUrl(url)
       else:
           print(f"Arquivo não encontrado: {caminho_absoluto}")

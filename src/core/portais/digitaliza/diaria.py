@@ -10,7 +10,7 @@ class DigitalizaDiaria(BasePortal):
         self.console = Console()
     
     
-    def buscar_diarias(self, url_base, ano_inicio, ano_fim, credor_nome):
+    def buscar_diarias(self, url_base, ano_inicio, ano_fim, credor_nome, timeout):
         # Implementação específica para o método de busca "diaria" no portal Digitaliza
         # Esta é uma implementação de exemplo que deve ser adaptada
         
