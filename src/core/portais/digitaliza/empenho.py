@@ -176,7 +176,7 @@ class DigitalizaEmpenho(BasePortal):
                     parsed_url = urlparse(base_url)
                     host_info = f"{parsed_url.hostname}:{parsed_url.port or 80 if parsed_url.scheme == 'http' else 443}"
                     self.atualizar_progresso(
-                        f"[cyan][VERBOSE][/cyan] Requisição para {host_info} (Timeout {timeout}) - Status {response.status_code}"
+                        f"[cyan][VERBOSE][/cyan] Requisição para {host_info} (Timeout {timeout}s) - Status {response.status_code}"
                     )
 
                 soup = BeautifulSoup(response.text, 'html.parser')
