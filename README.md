@@ -108,21 +108,29 @@ Você pode escolher entre baixar o **instalador** ou o **arquivo .zip**:
 - Mantenha o software atualizado
 - Verifique a disponibilidade do portal antes das consultas
 
-## Cidades e Portais Suportados
-
-Os sistema atualmente suporta os municípios e órgãos que usam o Portal da Transparência da Digitaliza (https://www.digitaliza.com.br). Veja a lista de cidades disponíveis no [arquivo de cidades suportadas](resources/cidades.json) .
-
 ## Arquivos de Configuração
-Em `resources/`, você encontrará arquivos de configuração:
+
+Na pasta `resources/`, você encontrará arquivos de configuração importantes:
+
 ### cidades.json
-Mapeia as cidades e seus respectivos órgãos aos portais de transparência:
+
+Mapeia as cidades e seus respectivos órgãos aos portais de transparência, incluindo o modelo e método de busca utilizados:
+
 ```json
 {
-    "Cidade": {
-        "Nome do Órgão": "URL do portal de transparência"
+  "Cidade": {
+    "Órgão": {
+      "modelo_portal": "digitaliza",
+      "metodo_busca": "empenho",
+      "url_base": "URL do portal de transparência"
     }
+  }
 }
 ```
+### Observações:
+
+- `modelo_portal`: indica o nome da pasta em `src/core/portais/` onde está a lógica de scraping para um portal (ex: digitaliza, memory, etc).
+- `metodo_busca`: define se será usado o método de busca por diaria dentro do portal (em digitaliza, por exemplo, existe uma página apenas para diárias e outra para todos empenhos). O arquivo .py terá o nome do método de busca.
 
 ### cidades_chave.json
 Lista de cidades-chave para filtrar destinos de viagens:
@@ -207,15 +215,13 @@ python app.py
 
 ### Terminal
 ```bash
-python app.py --terminal [--detalhada | --rapida] [--verbose]
+python app.py --terminal [--verbose]
 ```
 ## Argumentos disponíveis
 
 | Argumento       | Descrição                                                                |
 |-----------------|--------------------------------------------------------------------------|
 | `--terminal`    | Executa a aplicação em modo terminal (obrigatório para interface CLI)    |
-| `--detalhada`   | Usa o modo de busca detalhada (padrão - mais confiável)                  |
-| `--rapida`      | Usa o modo de busca rápida (ainda não está funcionando, usará a padrão)  |
 | `--verbose`     | Exibe logs detalhados, como requisições HTTP e respostas dos portais     |
 
 ### Visualização do Terminal
@@ -224,15 +230,19 @@ python app.py --terminal [--detalhada | --rapida] [--verbose]
 ## Estrutura do Projeto
 ```
 diarias-collector/
-├── app.py
+├── app.py                  # Início da aplicação
+├── requirements.txt        # Dependências
+├── README.md               # Documentação
+├── resources/              # Arquivos estáticos (JSON, ícones etc.)
+│
 ├── src/
-│   ├── cli/
-│   ├── core/
-│   ├── ui/
-│   └── utils/
-├── resources
-├── requirements.txt
-└── README.md
+│   ├── cli/                # Linha de comando (CLI)
+│   ├── core/               # Lógica principal e scrapers
+│   │   ├── scraper.py      # Orquestrador dos scrapers
+│   │   └── portais/        # Implementações por portal 
+│   ├── ui/                 # Interface gráfica (PyQt6)
+│   └── utils/              # Utilitários (PDF, Excel, validações)
+
 ```
 
 ## Funcionalidades

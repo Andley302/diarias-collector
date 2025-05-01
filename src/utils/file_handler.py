@@ -12,6 +12,7 @@ import subprocess
 from pathlib import Path
 import pandas as pd
 from src.utils.version import VERSION, GITHUB_URL
+from datetime import datetime
 
 def formatar_nome(nome):
     nome_limpo = re.sub(r'[<>:"/\\|?*]', '', nome).strip()
@@ -51,7 +52,8 @@ def criar_pasta_do_credor(credor_nome, cidade, orgao, ano_inicio, ano_fim, path_
 def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, cidade, orgao, path_destino=None):
     try:
         pasta_destino = criar_pasta_do_credor(credor_nome, cidade, orgao, ano_inicio, ano_fim, path_destino)
-        nome_arquivo = f"DIARIAS_{ano_inicio}-{ano_fim}.pdf"
+        primeiro_nome = credor_nome.strip().split()[0]
+        nome_arquivo = f"{primeiro_nome}_DIARIAS_{ano_inicio}-{ano_fim}.pdf"
         pdf_file_path = os.path.join(pasta_destino, nome_arquivo)
 
         doc = SimpleDocTemplate(
@@ -76,9 +78,21 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             'CenteredStyle',
             parent=styles['Normal'],
             alignment=1,
-            fontSize=9,
+            fontSize=7,
             spaceBefore=3,
             spaceAfter=3
+        )
+
+        centered_style_table = ParagraphStyle(
+            'CenteredStyle',
+            parent=styles['Normal'],
+            alignment=1,
+            fontSize=7,
+            spaceBefore=3,
+            spaceAfter=3,
+            textAnchor='middle',  
+            allowOrphans=0, 
+            allowWidows=0, 
         )
 
         def header(canvas, doc):
@@ -86,18 +100,26 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             y_top = doc.pagesize[1] - 13
 
             header_text = Paragraph(
-                f"<para alignment='center'><font size=8><b>Extraído por Diárias Collector v{VERSION}</b></font></para>",
+                f"<para alignment='center'><font size=8><b>Gerado por Diárias Collector v{VERSION}</b></font></para>",
                 styles["Normal"]
             )
             w, h1 = header_text.wrap(doc.width, doc.topMargin)
             header_text.drawOn(canvas, doc.leftMargin, y_top - h1)
 
-            github_text = Paragraph(
-                f"<para alignment='center'><font size='7'>Para mais detalhes, acesse o código fonte no <link href='{GITHUB_URL}'>GitHub</link>.</font></para>",
+            data_hoje = datetime.now().strftime("%d/%m/%Y %H:%M")
+            data_text = Paragraph(
+                f"<para alignment='center'><font size=7>Data de processamento: {data_hoje}</font></para>",
                 styles["Normal"]
             )
-            w, h2 = github_text.wrap(doc.width, doc.topMargin)
-            github_text.drawOn(canvas, doc.leftMargin, y_top - h1 - h2 - 2)
+            w, h2 = data_text.wrap(doc.width, doc.topMargin)
+            data_text.drawOn(canvas, doc.leftMargin, y_top - h1 - h2 - 2)
+
+            github_text = Paragraph(
+                f"<para alignment='center'><font size='7'>Disponível em: <link href='{GITHUB_URL}'>{GITHUB_URL}</link></font></para>",
+                styles["Normal"]
+            )
+            w, h3 = github_text.wrap(doc.width, doc.topMargin)
+            github_text.drawOn(canvas, doc.leftMargin, y_top - h1 - h2 - h3 - 4)
 
             canvas.restoreState()
 
@@ -150,7 +172,7 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
                     Paragraph(emp['Ordenador'], normal_style),
                     Paragraph(emp['Descrição'], normal_style),
                     Paragraph(emp['Valor Bruto'], normal_style),
-                    Paragraph(f'<link href="{emp["Detalhes"]}">Clique Aqui</link>', centered_style)
+                    Paragraph(f'<link href="{emp["Detalhes"]}">{emp["Detalhes"]}</link>', centered_style_table)
                 ])
 
             table = Table(data, colWidths=col_widths)
@@ -208,7 +230,8 @@ def save_to_excel(dados_empenhos, credor_nome="CREDOR", ano_inicio="XXXX", ano_f
 
     try:
         pasta_destino = criar_pasta_do_credor(credor_nome, cidade, orgao, ano_inicio, ano_fim, path_destino)
-        nome_arquivo = f"DIARIAS_{ano_inicio}-{ano_fim}.xlsx"
+        primeiro_nome = credor_nome.strip().split()[0]
+        nome_arquivo = f"{primeiro_nome}_DIARIAS_{ano_inicio}-{ano_fim}.xlsx"
         caminho_arquivo = os.path.join(pasta_destino, nome_arquivo)
 
         df = pd.DataFrame(dados_empenhos)

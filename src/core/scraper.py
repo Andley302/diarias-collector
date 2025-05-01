@@ -1,99 +1,51 @@
 import json
-import requests
-from bs4 import BeautifulSoup
-import unicodedata
 import os
 from rich.console import Console
-from urllib.parse import urlparse
 
-def carregar_ou_criar_cidades():
-    json_path = resource_path('resources/cidades_chave.json')
-    cidades_padrao = [
-        "CARLOS CHAGAS", "NANUQUE", "ITAOBIM", "GOVERNADOR VALADARES", "TEOFILO OTONI", 
-        "TEIXEIRA DE FREITAS", "ITANHEM", "MEDEIROS NETO", "VITORIA", "AGUAS FORMOSAS", 
-        "IPATINGA", "BELO HORIZONTE", "BRASILIA", "SAO PAULO", "CRISOLITA", 
-        "NOVO ORIENTE DE MINAS", "PAVAO", "FRONTEIRA DOS VALES", "UMBURATIBA", 
-        "UMBURANINHA", "SANTA HELENA DE MINAS", "FELISBURGO", "ALMENARA", "BH"
-    ]
-
-    if not os.path.exists(json_path):
-        try:
-            os.makedirs(os.path.dirname(json_path), exist_ok=True)
-            with open(json_path, 'w', encoding='utf-8') as file:
-                json.dump(cidades_padrao, file, ensure_ascii=False, indent=4)
-            print(f"[INFO] Arquivo cidades.json criado em {json_path}")
-        except Exception as e:
-            print(f"[ERRO] Não foi possível criar cidades.json: {e}")
-            return []
-
-    try:
-        with open(json_path, 'r', encoding='utf-8') as file:
-            return json.load(file)
-    except Exception as e:
-        print(f"[ERRO] Erro ao carregar cidades.json: {e}")
-        return []
-    
-def carregar_ou_criar_palavras_chave():
-    json_path = resource_path('resources/palavras_chave.json')
-    palavras_padrao = [
-        'diária', 'diaria', 'diárias', 'diarias', 
-        'viagem', 'viagens', 'locomoção', 'locomocao', 'deslocamento'
-    ]
-
-    if not os.path.exists(json_path):
-        try:
-            os.makedirs(os.path.dirname(json_path), exist_ok=True)
-            with open(json_path, 'w', encoding='utf-8') as file:
-                json.dump(palavras_padrao, file, ensure_ascii=False, indent=4)
-            print(f"[INFO] Arquivo palavras_chave.json criado em {json_path}")
-        except Exception as e:
-            print(f"[ERRO] Não foi possível criar palavras_chave.json: {e}")
-            return []
-
-    try:
-        with open(json_path, 'r', encoding='utf-8') as file:
-            return json.load(file)
-    except Exception as e:
-        print(f"[ERRO] Erro ao carregar palavras_chave.json: {e}")
-        return []
-        
-def resource_path(relative_path):
-    return os.path.join(os.path.abspath("."), relative_path)
+# Importações das implementações específicas de portais
+from src.core.portais.digitaliza.empenho import DigitalizaEmpenho
+from src.core.portais.digitaliza.diaria import DigitalizaDiaria
+from src.core.portais.memory.diaria import MemoryDiaria
+from src.core.utils import resource_path
 
 class DiariasCollector:
-    def __init__(self, callback=None, verbose=False, modo_busca='detalhada'):
+    def __init__(self, callback=None, verbose=False):
         self.callback = callback
         self.verbose = verbose
-        self.modo_busca = modo_busca
         self.console = Console()
-
+        
+        self.portal_implementations = {
+            'digitaliza': {
+                'diaria': DigitalizaDiaria,
+                'empenho': DigitalizaEmpenho
+            },
+            'memory': {
+                'diaria': MemoryDiaria
+            }
+        }
+        
         self.cidades_orgaos = self.carregar_cidades_orgaos()
 
     def exibir_configuracoes(self):
         conteudo = (
-            f"[bold cyan]Modo de Busca:[/bold cyan] [green]{self.modo_busca.capitalize()}[/green]\n"
             f"[bold cyan]Logs detalhados:[/bold cyan] [green]{'Sim' if self.verbose else 'Não'}[/green]"
         )
         self.console.print(conteudo)
-
         
     def atualizar_progresso(self, mensagem, empenho=None):
         if self.callback:
             self.callback(mensagem, empenho)
         else:
-            self.console.print(mensagem)
+            self.console.print(mensagem, markup=True, highlight=True)
 
-    def remover_acentos(self, texto):
-        return ''.join(c for c in unicodedata.normalize('NFD', texto) 
-                       if unicodedata.category(c) != 'Mn')
 
     def carregar_cidades_orgaos(self):
         try:
-            json_path =  resource_path('resources/cidades.json')
+            json_path = resource_path('resources/cidades.json')
             with open(json_path, 'r', encoding='utf-8') as file:
                 return json.load(file)
         except Exception as e:
-            print(f"Erro ao carregar cidades.json: {e}")
+            self.atualizar_progresso(f"[bold red]❌ Erro ao carregar cidades.json: {e}[/bold red]")
             return {}
 
     def validar_entrada(self, ano_inicio, ano_fim, credor_nome):
@@ -117,265 +69,66 @@ class DiariasCollector:
         
         return True, ""
 
-
-    def pegar_urls_empenhos(self, base_url, modo='detalhada', verbose=False):
-        urls_empenhos = []
-        self.atualizar_progresso(f"Acessando URL principal: {base_url}")
-        
-        try:
-            if modo == 'detalhada':
-                response = requests.get(base_url, timeout=30)
-
-                if verbose:
-                    parsed_url = urlparse(base_url)
-                    host_info = f"{parsed_url.hostname}:{parsed_url.port or 80 if parsed_url.scheme == 'http' else 443}"
-
-                    self.atualizar_progresso(
-                        f"[cyan][VERBOSE][/cyan] Requisição para {host_info} - Status {response.status_code}"
-                    )
-
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.text, 'html.parser')
-
-                    links = soup.find_all('a', class_='btn_table')
-                    if links:
-                        for link in links:
-                            detalhe_url = link['href']
-                            url_parts = detalhe_url.split('/')
-                            if len(url_parts) >= 4:
-                                try:
-                                    ano_empenho = int(url_parts[-3])
-                                    mes_empenho = url_parts[-2]
-                                    urls_empenhos.append({
-                                        'ano': ano_empenho,
-                                        'mes': mes_empenho,
-                                        'url': detalhe_url
-                                    })
-                                except ValueError:
-                                    self.atualizar_progresso(
-                                        f"Ano ou mês inválido encontrado na URL: {detalhe_url}"
-                                    )
-                    else:
-                        self.atualizar_progresso("Nenhum empenho encontrado na página principal.")
-
-            elif modo == 'rapida':
-                self.atualizar_progresso("[yellow]Busca rápida não disponível no momento. Usando busca detalhada...[/yellow]")
-                 
-                return self.pegar_urls_empenhos(base_url, modo='detalhada', verbose=verbose)
-                response = requests.get(base_url, timeout=30)
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.text, 'html.parser')
-
-                    filtro_div = soup.select_one('#DataTables_Table_0_filter')
-                    if filtro_div:
-                        input_search = filtro_div.select_one('input[type="search"]')
-                        if input_search:
-                            self.atualizar_progresso("Campo de pesquisa encontrado!")
-                        else:
-                            self.atualizar_progresso("Campo de pesquisa não encontrado dentro do filtro.")
-                            print("HTML do filtro:\n", filtro_div.prettify())
-                    else:
-                        self.atualizar_progresso("Div de filtro (#DataTables_Table_0_filter) não encontrada.")
-
-            else:
-                self.atualizar_progresso("Modo não reconhecido.")
-
-        except Exception as e:
-            self.atualizar_progresso(f"Erro ao acessar a URL principal: {str(e)}")
-
-        self.atualizar_progresso(f"Total de URLs de empenhos encontradas: {len(urls_empenhos)}")
-        return urls_empenhos
-    
-    def extrair_empenhos_palavras_chave(self, url_empenho, ano, mes, credor_nome):
-        response = requests.get(url_empenho, timeout=30)
-        
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            rows = soup.find_all('tr')
-            
-            palavras_chave = carregar_ou_criar_palavras_chave()
-
-            valor_total = 0.0
-            dados_empenhos = []
-            
-            for row in rows:
-                colunas = row.find_all('td')
-                
-                if len(colunas) > 0:
-                    descricao = colunas[0].get_text().lower()
-                    
-                    if any(palavra in descricao for palavra in palavras_chave):
-                        link_empenho = colunas[-1].find('a')['href']
-                        valor, dados = self.extrair_dados_empenho(link_empenho, credor_nome)
-                        if valor > 0:
-                            dados_empenhos.append({
-                                'Ano': ano,
-                                'Mês': mes,
-                                'Número do Empenho': dados['Número do Empenho'],
-                                'Data': dados['Data'],
-                                'Modalidade': dados['Modalidade'],
-                                'Credor': dados['Credor'],
-                                'Ordenador': dados['Ordenador'],
-                                'CPF do Ordenador': dados['CPF do Ordenador'],
-                                'Valor Bruto': dados['Valor Bruto'],
-                                'Descrição': dados['Descrição'].upper(),
-                                'Detalhes': link_empenho
-                            })
-                            valor_total += valor
-            
-            return valor_total, dados_empenhos
-        return 0.0, []
-
-    def extrair_dados_empenho(self, url_empenho, credor_nome):
-        try:
-            response = requests.get(url_empenho, timeout=30)
-            
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                numero_empenho_tag = soup.find('input', {'id': ''})
-                numero_empenho = numero_empenho_tag['value'] if numero_empenho_tag else ''
-                
-                self.atualizar_progresso(f"Verificando o empenho N°{numero_empenho}...", numero_empenho)
-                
-                data_tag = soup.find('input', {'id': 'contratacao'})
-                data = data_tag['value'] if data_tag else ''
-                
-                modalidade_tag = soup.find('input', {'id': 'modalidade'})
-                modalidade = modalidade_tag['value'] if modalidade_tag else ''
-                
-                credor_tag = soup.find('input', {'id': 'credor'})
-                credor = credor_tag['value'] if credor_tag else ''
-                
-                ordenador_tag = soup.find('input', {'id': 'ordenador'})
-                ordenador = ordenador_tag['value'] if ordenador_tag else ''
-                
-                cpf_tag = soup.find('input', {'id': 'c_ordenador'})
-                cpf = cpf_tag['value'] if cpf_tag else ''
-                
-                valor_bruto_tag = soup.find('input', {'id': 'valor'})
-                valor_bruto = valor_bruto_tag['value'] if valor_bruto_tag else ''
-                
-                descricao_tag = soup.find('textarea', {'id': 'descricao'})
-                descricao = descricao_tag.text.strip() if descricao_tag else ''
-                
-                valor_float = 0.0
-                try:
-                    valor_float = float(valor_bruto.replace("R$", "").replace(".", "").replace(",", ".").strip())
-                except ValueError:
-                    self.atualizar_progresso(f"Erro ao converter valor: {valor_bruto}")
-                
-                credor_nome_normalizado = self.remover_acentos(credor_nome).lower()
-                credor_normalizado = self.remover_acentos(credor).lower()
-
-
-                if credor_nome_normalizado in credor_normalizado:
-                    self.atualizar_progresso(
-                        f"[green]Diária de Viagem para {credor} no empenho N°{numero_empenho} "
-                        f"no dia {data} no valor de {valor_bruto}.[/green]"
-                    )
-
-                    cidades = carregar_ou_criar_cidades()
-
-                    descricao_sem_acento = self.remover_acentos(descricao).lower()
-                    cidade_encontrada = None
-
-                    for cidade in cidades:
-                        if cidade.lower() in descricao_sem_acento:
-                            cidade_encontrada = cidade
-                            break
-
-                    if cidade_encontrada:
-                        descricao = f"VIAGEM A {cidade_encontrada}"
-                    else:
-                        descricao = "VIAGEM A LOCAL NÃO INFORMADO"
-
-                    dados = {
-                        'Número do Empenho': numero_empenho,
-                        'Data': data,
-                        'Modalidade': modalidade,
-                        'Credor': credor,
-                        'Ordenador': ordenador,
-                        'CPF do Ordenador': cpf,
-                        'Valor Bruto': valor_bruto,
-                        'Descrição': descricao
-                    }
-                    return valor_float, dados
-        except Exception as e:
-            self.atualizar_progresso(f"Erro ao processar empenho {url_empenho}: {str(e)}")
-        
-        return 0.0, {}
-
-    def filtrar_empenhos_por_ano(self, empenhos, ano_inicio, ano_fim):
-        return [empenho for empenho in empenhos if ano_inicio <= empenho['ano'] <= ano_fim]
-
-    def buscar_diarias(self, cidade, orgao, ano_inicio, ano_fim, credor_nome, modo='detalhada', verbose=False):
+    def buscar_diarias(self, cidade, orgao, ano_inicio, ano_fim, credor_nome, verbose=False):
         valido, mensagem = self.validar_entrada(ano_inicio, ano_fim, credor_nome)
         if not valido:
-            self.atualizar_progresso(mensagem)
-            return False, mensagem, None, None
+            self.atualizar_progresso(f"[bold red]❌ {mensagem}[/bold red]")
+            return False, mensagem, [], 0.0
         
         ano_inicio = int(ano_inicio)
         ano_fim = int(ano_fim)
         
         if cidade not in self.cidades_orgaos:
-            return False, f"Cidade '{cidade}' não encontrada.", None, None
+            self.atualizar_progresso(f"[bold red]❌ Cidade '{cidade}' não encontrada.[/bold red]")
+            return False, f"Cidade '{cidade}' não encontrada.", [], 0.0
         
         orgaos = self.cidades_orgaos[cidade]
         if orgao not in orgaos:
-            return False, f"Órgão '{orgao}' não encontrado para a cidade '{cidade}'.", None, None
+            self.atualizar_progresso(f"[bold red]❌ Órgão '{orgao}' não encontrado para a cidade '{cidade}'.[/bold red]")
+            return False, f"Órgão '{orgao}' não encontrado para a cidade '{cidade}'.", [], 0.0
         
-        base_url = orgaos[orgao]
-
-        #self.exibir_configuracoes()
+        orgao_config = orgaos[orgao]
+        modelo_portal = orgao_config.get('modelo_portal', '').lower()
+        metodo_busca = orgao_config.get('metodo_busca', '').lower()
+        url_base = orgao_config.get('url_base', '')
         
-        self.atualizar_progresso(f"🔍 Buscando empenhos em {orgao} - {cidade}")
-        empenhos = self.pegar_urls_empenhos(base_url, modo, verbose)
-
-    
-        empenhos_filtrados = self.filtrar_empenhos_por_ano(empenhos, ano_inicio, ano_fim)
-        self.atualizar_progresso(f"Encontrados {len(empenhos_filtrados)} meses no período {ano_inicio}-{ano_fim}")
+        if not modelo_portal or not metodo_busca or not url_base:
+            self.atualizar_progresso(f"[bold red]❌ Configuração incompleta para o órgão '{orgao}'.[/bold red]")
+            return False, f"Configuração incompleta para o órgão '{orgao}'.", [], 0.0
         
-        valor_total = 0.0
-        dados_empenhos = []
-               
-        with self.console.status("[yellow]Processando empenhos, por favor aguarde..."):
-            for i, empenho in enumerate(empenhos_filtrados):
-                url = empenho.get('url')
-                try:
-                    ano = int(empenho.get('ano'))
-                    mes = int(empenho.get('mes'))
-                except (TypeError, ValueError):
-                    self.console.print(f"[red]⚠️ Dados inválidos no empenho {i+1}, pulando...")
-                    continue
-
-                mes_str = f"{mes:02d}"
-                ano_str = str(ano)
-
+        if modelo_portal not in self.portal_implementations:
+            self.atualizar_progresso(f"[bold red]❌ Modelo de portal '{modelo_portal}' não suportado.[/bold red]")
+            return False, f"Modelo de portal '{modelo_portal}' não suportado.", [], 0.0
+        
+        if metodo_busca not in self.portal_implementations[modelo_portal]:
+            self.atualizar_progresso(f"[bold red]❌ Método de busca '{metodo_busca}' não suportado para o portal '{modelo_portal}'.[/bold red]")
+            return False, f"Método de busca '{metodo_busca}' não suportado para o portal '{modelo_portal}'.", [], 0.0
+        
+        portal_class = self.portal_implementations[modelo_portal][metodo_busca]
+        portal_scraper = portal_class(callback=self.callback, verbose=verbose)
+        
+        self.atualizar_progresso(f"[bold blue]🔍 Buscando diárias em {orgao} - {cidade} através de {modelo_portal}/{metodo_busca}[/bold blue]")
+        
+        try:
+            valor_total, dados_empenhos = portal_scraper.buscar_diarias(url_base, ano_inicio, ano_fim, credor_nome)
+            
+            primeiro_credor = credor_nome
+            if dados_empenhos:
+                primeiro_credor = dados_empenhos[0]['Credor']
+            
+            periodo = f"{ano_inicio} a {ano_fim}" if ano_inicio != ano_fim else str(ano_inicio)
+            
+            if valor_total > 0:
                 self.atualizar_progresso(
-                    f"🔎 Lendo empenho {i+1} de {len(empenhos_filtrados)} ({mes_str}/{ano_str})"
+                    f"[bold green]✅ O credor {primeiro_credor} somou um total de R$ {valor_total:.2f} em diárias no período de {periodo}.[/bold green]"
                 )
-
-                if not url:
-                    self.console.print(f"[red]⚠️ URL ausente no empenho {i+1}, pulando...")
-                    continue
-
-                valor, dados = self.extrair_empenhos_palavras_chave(url, ano, mes, credor_nome)
-                valor_total += valor
-                dados_empenhos.extend(dados)
-
-        primeiro_credor = credor_nome
-        if dados_empenhos:
-            primeiro_credor = dados_empenhos[0]['Credor']
-        
-        periodo = f"{ano_inicio} a {ano_fim}" if ano_inicio != ano_fim else str(ano_inicio)
-        
-        if valor_total > 0:
-           self.atualizar_progresso(
-                f"[green]O credor {primeiro_credor} somou um total de R$ {valor_total:.2f} em diárias no período de {periodo}.[/green]"
-           )
-
-           return True, "", dados_empenhos, valor_total 
-        else:
-            mensagem_final = f"Nenhum valor encontrado para o credor '{primeiro_credor}' no período de {periodo}."
-            self.atualizar_progresso(mensagem_final)
-            return True, mensagem_final, [], 0
+                return True, "", dados_empenhos, valor_total 
+            else:
+                mensagem_final = f"Nenhum valor encontrado para o credor '{primeiro_credor}' no período de {periodo}."
+                self.atualizar_progresso(f"[bold yellow]⚠️ {mensagem_final}[/bold yellow]")
+                return True, mensagem_final, [], 0.0
+                
+        except Exception as e:
+            erro_msg = f"Erro ao buscar diárias: {str(e)}"
+            self.atualizar_progresso(f"[bold red]❌ {erro_msg}[/bold red]")
+            return False, erro_msg, [], 0.0

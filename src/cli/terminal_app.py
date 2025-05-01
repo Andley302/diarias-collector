@@ -41,7 +41,7 @@ def perguntar_credor():
         console.print(Panel("[bold red]Erro: O nome do credor não pode estar vazio.[/bold red]", style="red"))
 
 
-def main(verbose=False, modo_busca='detalhada'):
+def main(verbose=False):
     console = Console()
 
     titulo = f"[bold cyan]📄 Diárias Collector v{VERSION}[/bold cyan]"
@@ -67,7 +67,7 @@ def main(verbose=False, modo_busca='detalhada'):
         f"\n[blue]Verifique sempre por atualizações em:[/blue] [underline]{GITHUB_URL}[/underline]\n"
     )
 
-    scraper = DiariasCollector(verbose=verbose, modo_busca=modo_busca)
+    scraper = DiariasCollector(verbose=verbose)
     cidades_orgaos = scraper.cidades_orgaos
 
     if not cidades_orgaos:
@@ -90,7 +90,7 @@ def main(verbose=False, modo_busca='detalhada'):
     os.makedirs(base_dir, exist_ok=True)
 
     sucesso, mensagem, dados_empenhos, valor_total = scraper.buscar_diarias(
-        cidade_selecionada, orgao_selecionado, ano_inicio, ano_fim, credor_nome, modo_busca, verbose
+        cidade_selecionada, orgao_selecionado, ano_inicio, ano_fim, credor_nome, verbose
     )
 
     if sucesso:
@@ -119,7 +119,9 @@ def main(verbose=False, modo_busca='detalhada'):
         )
         console.print(f"\n[bold green]Relatório Excel salvo em:[/bold green] {excel_path}")
         console.print(f"[bold green]Relatório PDF salvo em:[/bold green] {pdf_path}")
-        console.print(f"\n[italic green]{mensagem}[/italic green]")
+        if mensagem:
+          console.print(f"\n[italic green]{mensagem}[/italic green]")
+
     else:
         console.print(Panel(f"[bold red]Erro:[/bold red] {mensagem}", style="red"))
 
