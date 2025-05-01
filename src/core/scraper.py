@@ -107,7 +107,7 @@ class DiariasCollector:
         portal_class = self.portal_implementations[modelo_portal][metodo_busca]
         portal_scraper = portal_class(callback=self.callback, verbose=verbose)
         
-        self.atualizar_progresso(f"[bold blue]🔍 Buscando diárias em {orgao} - {cidade} através de {modelo_portal}/{metodo_busca}[/bold blue]")
+        self.atualizar_progresso(f"[bold blue]🔍 Buscando diárias em {orgao} - {cidade} via {modelo_portal}/{metodo_busca}[/bold blue]")
         
         try:
             valor_total, dados_empenhos = portal_scraper.buscar_diarias(url_base, ano_inicio, ano_fim, credor_nome)

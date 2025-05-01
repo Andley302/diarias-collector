@@ -121,6 +121,8 @@ def main(verbose=False):
         console.print(f"[bold green]Relatório PDF salvo em:[/bold green] {pdf_path}")
         if mensagem:
           console.print(f"\n[italic green]{mensagem}[/italic green]")
+        else:
+          console.print(f"\n")
 
     else:
         console.print(Panel(f"[bold red]Erro:[/bold red] {mensagem}", style="red"))
