@@ -15,6 +15,8 @@ class DigitalizaDiaria(BasePortal):
         self.max_retries = 3
         self.retry_delays = [5, 10, 30]
         self.connection_lost = False
+        self.total_empenhos = 0 
+        self.total_meses = 0   
     
     def countdown_retry(self, seconds, message):
         """Display a real-time countdown for retry attempts"""
@@ -37,6 +39,9 @@ class DigitalizaDiaria(BasePortal):
         valor_total = 0.0
         dados_empenhos = []
         
+        self.total_empenhos = 0 
+        self.total_meses = 0    
+        
         connection_issues = {
             'dns_failures': 0,
             'timeouts': 0,
@@ -49,7 +54,11 @@ class DigitalizaDiaria(BasePortal):
             diarias = self.pegar_urls_diarias(url_base, self.verbose, timeout)
             
             diarias_filtradas = self.filtrar_diarias_por_ano(diarias, ano_inicio, ano_fim)
-            self.atualizar_progresso(f"Encontrados {len(diarias_filtradas)} meses no período {ano_inicio}-{ano_fim}")
+            self.total_meses = len(diarias_filtradas) 
+            self.atualizar_progresso(
+                f"Encontrados {self.total_meses} meses no período {ano_inicio}-{ano_fim}",
+                None, None, self.total_empenhos, self.total_meses 
+            )
             
             with self.console.status("[yellow]Processando diárias, por favor aguarde..."):
                 for i, diaria in enumerate(diarias_filtradas):
@@ -239,7 +248,11 @@ class DigitalizaDiaria(BasePortal):
                 self.atualizar_progresso(f"[bold red]❌ Erro ao acessar a URL principal: {str(e)}[/bold red]")
                 raise
 
-        self.atualizar_progresso(f"Total de URLs de diárias encontradas: {len(urls_diarias)}")
+        self.total_empenhos = len(urls_diarias) 
+        self.atualizar_progresso(
+            f"Total de URLs de diárias encontradas: {self.total_empenhos}",
+            None, None, self.total_empenhos, self.total_meses  
+        )
         return urls_diarias
     
     def filtrar_diarias_por_ano(self, diarias, ano_inicio, ano_fim):
@@ -275,8 +288,11 @@ class DigitalizaDiaria(BasePortal):
                         credor_tabela_normalizado = remover_acentos(credor_tabela).lower()
                         
                         if credor_nome_normalizado in credor_tabela_normalizado:
-                            self.atualizar_progresso(f"[cyan]🔍 Verificando a diária N°{numero_empenho}...[/cyan]", numero_empenho)
-                            
+                            self.atualizar_progresso(
+                                f"[cyan]🔍 Verificando a diária N°{numero_empenho}...[/cyan]",
+                                numero_empenho, data, self.total_empenhos, self.total_meses 
+                            )
+                                                        
                             valor, dados_detalhados = self.extrair_dados_diaria(link_detalhe_url, credor_nome, numero_empenho, data, valor_bruto)
                             
                             if valor > 0:

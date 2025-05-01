@@ -32,7 +32,7 @@ def log_message(message, level=logging.INFO):
     logging.log(level, message)
 
 class ScraperThread(QThread):
-    update_signal = pyqtSignal(str, str)
+    update_signal = pyqtSignal(str, str, str, int, int) 
     finished_signal = pyqtSignal(bool, str, list, float)
 
     def __init__(self, cidade, orgao, ano_inicio, ano_fim, credor_nome, verbose=False):
@@ -45,8 +45,9 @@ class ScraperThread(QThread):
         self.verbose = verbose
 
     def run(self):
-            def callback(mensagem, empenho=None):
-                self.update_signal.emit(mensagem, empenho or "")
+            def callback(mensagem, empenho=None, data=None, total_empenhos=None, total_meses=None):            
+                self.update_signal.emit(mensagem, empenho or "", data or "", 
+                                       total_empenhos or 0, total_meses or 0)
 
             scraper = DiariasCollector(
                 callback=callback,
@@ -456,13 +457,47 @@ class ProgressScreen(QWidget):
         self.thread.finished_signal.connect(self.busca_finalizada)
         self.thread.start()
 
-    def atualizar_progresso(self, mensagem, empenho=None):
+
+    def atualizar_progresso(self, mensagem, empenho=None, data=None, total_empenhos=None, total_meses=None):
+
         if empenho:
-           self.empenho_label.setText(
-                f"<br>Número do empenho: {empenho}<br><br>"
-                f"<b><font color='orange'>Esse processo pode demorar de minutos a horas,<br> "
-                "a depender da quantidade de anos selecionados e das diárias no portal. Aguarde!</font></b><br>"
-            )
+            color = 'orange'  
+            time_estimate = 'vários minutos' 
+            
+            if total_meses is not None:
+                if total_meses < 3:
+                    color = 'green'
+                    time_estimate = 'alguns minutos'
+                elif total_meses < 6:
+                    color = 'orange'
+                    time_estimate = 'vários minutos'
+                else:
+                    color = 'orange'
+                    time_estimate = 'vários minutos a horas'
+            
+            empenho_info = f"<br><b>Número do empenho: {empenho}</b>"
+            if data:
+                empenho_info += f"<br><b>Data: {data}</b>"
+            
+            total_info = ""
+            if total_empenhos > 0 or total_meses > 0:
+                partes = []
+                if total_empenhos > 0:
+                    partes.append(f"{total_empenhos} URLs")
+                if total_meses > 0:
+                    partes.append(f"{total_meses} meses")
+                total_info = " | ".join(partes)
+                        
+                wait_message = (
+                    f"<br><b><font color='{color}'>Esse processo pode demorar {time_estimate}, a depender da<br>"
+                    f"quantidade de anos selecionados e das diárias no portal. Aguarde!</font></b>"
+                )
+
+                if total_info:
+                    wait_message += f"<br><br><small><i>{total_info}</i></small><br>"
+
+            
+            self.empenho_label.setText(f"{empenho_info}<br>{wait_message}")
 
         self.logger.info(mensagem)
 

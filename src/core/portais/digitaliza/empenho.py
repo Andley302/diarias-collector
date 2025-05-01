@@ -15,6 +15,8 @@ class DigitalizaEmpenho(BasePortal):
         self.max_retries = 3
         self.retry_delays = [5, 10, 30]
         self.connection_lost = False
+        self.total_empenhos = 0
+        self.total_meses = 0
     
     def countdown_retry(self, seconds, message):
         """Display a real-time countdown for retry attempts"""
@@ -37,6 +39,9 @@ class DigitalizaEmpenho(BasePortal):
         valor_total = 0.0
         dados_empenhos = []
         
+        self.total_empenhos = 0
+        self.total_meses = 0
+        
         connection_issues = {
             'dns_failures': 0,
             'timeouts': 0,
@@ -49,7 +54,13 @@ class DigitalizaEmpenho(BasePortal):
             empenhos = self.pegar_urls_empenhos(url_base, self.verbose, timeout)
             
             empenhos_filtrados = self.filtrar_empenhos_por_ano(empenhos, ano_inicio, ano_fim)
-            self.atualizar_progresso(f"Encontrados {len(empenhos_filtrados)} meses no período {ano_inicio}-{ano_fim}")
+            self.total_meses = len(empenhos_filtrados)
+          
+            
+            self.atualizar_progresso(
+                f"Encontrados {self.total_meses} meses no período {ano_inicio}-{ano_fim}",
+                None, None, self.total_empenhos, self.total_meses
+            )
             
             with self.console.status("[yellow]Processando empenhos, por favor aguarde..."):
                 for i, empenho in enumerate(empenhos_filtrados):
@@ -65,7 +76,8 @@ class DigitalizaEmpenho(BasePortal):
                     ano_str = str(ano)
 
                     self.atualizar_progresso(
-                        f"🔎 Lendo empenho {i+1} de {len(empenhos_filtrados)} ({mes_str}/{ano_str})"
+                        f"🔎 Lendo empenho {i+1} de {self.total_meses} ({mes_str}/{ano_str})",
+                        None, None, self.total_empenhos, self.total_meses
                     )
 
                     if not url:
@@ -242,14 +254,16 @@ class DigitalizaEmpenho(BasePortal):
                 self.atualizar_progresso(f"[bold red]❌ Erro ao acessar a URL principal: {str(e)}[/bold red]")
                 raise
 
-        self.atualizar_progresso(f"Total de URLs de empenhos encontradas: {len(urls_empenhos)}")
+        self.total_empenhos = len(urls_empenhos)
+        self.atualizar_progresso(f"Total de URLs de empenhos encontradas: {self.total_empenhos}", 
+                               None, None, self.total_empenhos, None)
         return urls_empenhos
     
     def filtrar_empenhos_por_ano(self, empenhos, ano_inicio, ano_fim):
         return [empenho for empenho in empenhos if ano_inicio <= empenho['ano'] <= ano_fim]
     
     def extrair_empenhos_palavras_chave(self, url_empenho, ano, mes, credor_nome, timeout):
-        response = requests.get(url_empenho, timeout=timeout)
+        response = requests.get(url_empenho, timeout=30)
         
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -294,23 +308,25 @@ class DigitalizaEmpenho(BasePortal):
         
         while retry_count <= self.max_retries:
             try:
-                #self.atualizar_progresso(f"[cyan]🔍 Acessando detalhes do empenho...[/cyan]")
-            
                 response = requests.get(url_empenho, timeout=timeout)
             
                 if response.status_code == 200:
                     try:
-                        #self.atualizar_progresso(f"[cyan]🔍 Processando dados do empenho...[/cyan]")
-                        
                         soup = BeautifulSoup(response.text, 'html.parser')
                         numero_empenho_tag = soup.find('input', {'id': ''})
                         numero_empenho = numero_empenho_tag['value'] if numero_empenho_tag else ''
                         
-                        self.atualizar_progresso(f"[cyan]🔍 Verificando o empenho N°{numero_empenho}...[/cyan]", numero_empenho)
-                        
                         data_tag = soup.find('input', {'id': 'contratacao'})
                         data = data_tag['value'] if data_tag else ''
                         
+                        self.atualizar_progresso(
+                            f"[cyan]🔍 Verificando o empenho N°{numero_empenho}...[/cyan]", 
+                            numero_empenho,
+                            data,
+                            self.total_empenhos,
+                            self.total_meses 
+                        )
+                                        
                         modalidade_tag = soup.find('input', {'id': 'modalidade'})
                         modalidade = modalidade_tag['value'] if modalidade_tag else ''
                         

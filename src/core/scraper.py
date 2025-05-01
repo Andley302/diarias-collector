@@ -31,9 +31,9 @@ class DiariasCollector:
         )
         self.console.print(conteudo)
         
-    def atualizar_progresso(self, mensagem, empenho=None):
+    def atualizar_progresso(self, mensagem, empenho=None, data=None, total_empenhos=None, total_meses=None):
         if self.callback:
-            self.callback(mensagem, empenho)
+            self.callback(mensagem, empenho, data, total_empenhos, total_meses)
         else:
             self.console.print(mensagem, markup=True, highlight=True)
 
@@ -117,7 +117,7 @@ class DiariasCollector:
         self.atualizar_progresso(f"[bold blue]🔍 Buscando diárias em {orgao} - {cidade} via {modelo_portal}/{metodo_busca}[/bold blue]")
         
         try:
-            valor_total, dados_empenhos = portal_scraper.buscar_diarias(url_base, ano_inicio, ano_fim, credor_nome, timeout)
+            valor_total, dados_empenhos = portal_scraper.buscar_diarias(url_base, ano_inicio, ano_fim, credor_nome)
             
             primeiro_credor = credor_nome
             if dados_empenhos:
