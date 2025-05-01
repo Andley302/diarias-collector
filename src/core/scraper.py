@@ -90,7 +90,7 @@ class DiariasCollector:
         modelo_portal = orgao_config.get('modelo_portal', '').lower()
         metodo_busca = orgao_config.get('metodo_busca', '').lower()
         url_base = orgao_config.get('url_base', '')
-        
+
         try:
             timeout = int(orgao_config.get('timeout', 7))
             if timeout <= 0:
@@ -127,8 +127,9 @@ class DiariasCollector:
             
             if valor_total > 0:
                 self.atualizar_progresso(
-                    f"[bold green]✅ O credor {primeiro_credor} somou um total de R$ {valor_total:.2f} em diárias no período de {periodo}.[/bold green]"
-                )
+                f"[bold green]✅ No período de {periodo}, o credor {primeiro_credor} recebeu aproximadamente R$ {valor_total:.2f} em diárias de viagem.[/bold green]"
+            )
+
                 return True, "", dados_empenhos, valor_total 
             else:
                 mensagem_final = f" Nenhum valor encontrado para o credor '{primeiro_credor}' no período de {periodo}."

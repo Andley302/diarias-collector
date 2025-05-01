@@ -59,7 +59,7 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
         doc = SimpleDocTemplate(
             pdf_file_path,
             pagesize=letter,
-            topMargin=40,
+            topMargin=55,
             leftMargin=30,
             rightMargin=30,
             bottomMargin=30
@@ -74,14 +74,6 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             fontSize=11
         )
 
-        centered_style = ParagraphStyle(
-            'CenteredStyle',
-            parent=styles['Normal'],
-            alignment=1,
-            fontSize=7,
-            spaceBefore=3,
-            spaceAfter=3
-        )
 
         centered_style_table = ParagraphStyle(
             'CenteredStyle',
@@ -148,17 +140,18 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             Paragraph(f"<b>Município:</b> {cidade}", normal_style),
             Paragraph(f"<b>Órgão:</b> {orgao}", normal_style),
             Paragraph(f"<b>Período:</b> {ano_inicio} a {ano_fim}" if ano_inicio != ano_fim else f"<b>Período:</b> {ano_inicio}", normal_style),
-            Paragraph(f"<b>Total Gasto no Período:</b> {valor_formatado}", normal_style),
+            Paragraph(f"<b>Total aproximado:</b> {valor_formatado}", normal_style),
             Spacer(1, 16),
             Paragraph(
-                f"As informações a seguir referem-se às diárias de viagens pagas a <b>{primeiro_credor}</b> durante o período especificado, totalizando o valor de <b>{valor_formatado}</b>.",
+                f"As informações a seguir referem-se às diárias de viagem pagas ao credor <b>{primeiro_credor}</b> no período indicado, com valor total aproximado de <b>{valor_formatado}</b>.",
                 normal_style
             ),
             Paragraph(
-                "Todos os dados apresentados são públicos e foram obtidos diretamente do Portal da Transparência.",
+                "Todos os dados apresentados são de natureza pública e foram obtidos diretamente do Portal da Transparência.",
                 normal_style
             ),
             Spacer(1, 20)
+
         ]
 
         if dados_empenhos:
