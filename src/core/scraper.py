@@ -4,7 +4,7 @@ from rich.console import Console
 
 from src.core.portais.digitaliza.empenho import DigitalizaEmpenho
 from src.core.portais.digitaliza.diaria import DigitalizaDiaria
-from src.core.portais.memory.diaria import MemoryDiaria
+from src.core.portais.memory.api import MemoryApi 
 from src.core.utils import resource_path
 
 class DiariasCollector:
@@ -19,7 +19,7 @@ class DiariasCollector:
                 'empenho': DigitalizaEmpenho
             },
             'memory': {
-                'diaria': MemoryDiaria
+                'api': MemoryApi 
             }
         }
         
@@ -90,6 +90,7 @@ class DiariasCollector:
         modelo_portal = orgao_config.get('modelo_portal', '').lower()
         metodo_busca = orgao_config.get('metodo_busca', '').lower()
         url_base = orgao_config.get('url_base', '')
+        timeout = orgao_config.get('timeout')  # Get timeout from config
 
         try:
             timeout = int(orgao_config.get('timeout', 7))

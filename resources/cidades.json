@@ -28,5 +28,13 @@
             "url_base": "https://www.umburatiba.mg.gov.br/transparencia/diarias",
             "timeout": 5
         }
+    },
+    "Pavão (em teste — resultados sujeitos a imprecisão)": {
+        "Prefeitura Municipal de Pavão": {
+            "modelo_portal": "memory",
+            "metodo_busca": "api",
+            "url_base": "https://ilai.memory.com.br/api/cronapi/odata/v2/app/query330699",
+            "timeout": 20
+        }
     }
 }
