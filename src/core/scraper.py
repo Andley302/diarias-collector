@@ -1,8 +1,7 @@
 import json
-import os
+import re
 from rich.console import Console
 
-# Importações das implementações específicas de portais
 from src.core.portais.digitaliza.empenho import DigitalizaEmpenho
 from src.core.portais.digitaliza.diaria import DigitalizaDiaria
 from src.core.portais.memory.diaria import MemoryDiaria
@@ -133,6 +132,43 @@ class DiariasCollector:
                 return True, mensagem_final, [], 0.0
                 
         except Exception as e:
-            erro_msg = f"Erro ao buscar diárias: {str(e)}"
+            error_str = str(e)
+            
+            if "NameResolutionError" in error_str or "getaddrinfo failed" in error_str:
+                host = None
+                if "host=" in error_str:
+                    host_match = re.search(r"host='([^']+)'", error_str)
+                    if host_match:
+                        host = host_match.group(1)
+                
+                if host:
+                    erro_msg = f"Erro de conexão: Não foi possível encontrar o servidor '{host}'. Verifique sua conexão com a internet ou se o site está disponível."
+                else:
+                    erro_msg = "Erro de conexão: Não foi possível encontrar o servidor. Verifique sua conexão com a internet ou se o site está disponível."
+            
+            elif "ConnectTimeoutError" in error_str or "Read timed out" in error_str:
+                erro_msg = "Erro de conexão: O servidor demorou muito para responder. Verifique sua conexão com a internet ou tente novamente mais tarde."
+            
+            elif "ConnectionRefusedError" in error_str or "Connection refused" in error_str:
+                erro_msg = "Erro de conexão: O servidor recusou a conexão. O site pode estar temporariamente indisponível."
+            
+            elif "SSLError" in error_str:
+                erro_msg = "Erro de segurança: Não foi possível estabelecer uma conexão segura com o servidor. O site pode estar com problemas de certificado."
+            
+            elif "ConnectionError" in error_str or "Connection aborted" in error_str:
+                erro_msg = "Erro de conexão: Não foi possível conectar ao servidor. Verifique sua conexão com a internet ou tente novamente mais tarde."
+            
+            elif "HTTPError" in error_str or "status code" in error_str:
+                status_match = re.search(r"(\d{3})", error_str)
+                if status_match:
+                    status_code = status_match.group(1)
+                    erro_msg = f"Erro HTTP {status_code}: O servidor retornou um erro. O site pode estar com problemas ou em manutenção."
+                else:
+                    erro_msg = "Erro HTTP: O servidor retornou um erro. O site pode estar com problemas ou em manutenção."
+            
+            else:
+                erro_msg = f"Erro ao buscar diárias: {str(e)}"
+            
             self.atualizar_progresso(f"[bold red]❌ {erro_msg}[/bold red]")
             return False, erro_msg, [], 0.0
+

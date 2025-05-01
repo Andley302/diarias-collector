@@ -15,7 +15,7 @@
     },
     "Machacalis": {
         "Prefeitura Municipal de Machacalis": {
-            "modelo_portal": "memory",
+            "modelo_portal": "digitaliza",
             "metodo_busca": "diaria",
             "url_base": "https://www.machacalis.mg.gov.br/transparencia/diarias",
             "timeout": 5

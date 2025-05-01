@@ -472,7 +472,7 @@ class ProgressScreen(QWidget):
                 None,
                 "Erro na Busca",
                 f"A busca foi interrompida devido a um erro:\n\n{mensagem}\n\n"
-                "Verifique sua conexão e tente novamente."
+                "Tente novamente mais tarde."
             )
             self.cancelar_button.setText("Voltar")
             self.cancelar_button.setStyleSheet("background-color: blue; color: white;")
