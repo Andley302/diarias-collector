@@ -655,7 +655,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.stack)
         self.stack.setCurrentWidget(self.welcome_screen)
         
-        self.check_for_updates()
+        self.check_for_updates(False, True)
 
     def switch_to_welcome_screen(self):
         self.stack.setCurrentWidget(self.welcome_screen)
@@ -717,13 +717,14 @@ class MainWindow(QMainWindow):
       else:
           print(f"Arquivo não encontrado: {caminho_absoluto}")
 
-    def check_for_updates(self, show_up_to_date_message=False):
+    def check_for_updates(self, show_up_to_date_message=False, force_exit_on_update=False):
         """
         Check for updates and show notification if a new version is available.
         
         Args:
             show_up_to_date_message (bool): Whether to show a message when software is up to date.
-                                           Set to True for manual checks, False for automatic checks.
+                                        Set to True for manual checks, False for automatic checks.
+            force_exit_on_update (bool): Whether to force exit the application after user confirms update.
         """
         try:
             updater = UpdateChecker()
@@ -741,6 +742,11 @@ class MainWindow(QMainWindow):
                 
                 if reply == QMessageBox.StandardButton.Yes:
                     QDesktopServices.openUrl(QUrl(release_url))
+                    if force_exit_on_update:
+                        print("Fechando aplicativo para atualização...")
+                        self.closeEvent = lambda event: event.accept()
+                        import os
+                        os._exit(0)  
             elif show_up_to_date_message:
                 QMessageBox.information(
                     self,
@@ -749,6 +755,8 @@ class MainWindow(QMainWindow):
                 )
         except Exception as e:
             print(f"Erro ao verificar atualizações: {e}")
+
+
 
     def setup_menu(self):
         menubar = self.menuBar()
@@ -805,7 +813,7 @@ class MainWindow(QMainWindow):
         help_menu.addAction(version_action)
         
         update_action = QAction("Verificar Atualizações", self)
-        update_action.triggered.connect(lambda: self.check_for_updates(True))
+        update_action.triggered.connect(lambda: self.check_for_updates(True, True))
         help_menu.addAction(update_action)
     
     def toggle_verbose(self):
