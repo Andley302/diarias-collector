@@ -173,7 +173,8 @@ class DiariasCollector:
                     erro_msg = "Erro HTTP: O servidor retornou um erro. O site pode estar com problemas ou em manutenção."
             
             else:
-                erro_msg = f"Erro ao buscar diárias: {str(e)}"
+                #erro_msg = f"Erro ao buscar diárias: {str(e)}"
+                erro_msg = f"Ocorreu um erro desconhecido ao buscar diárias."
             
             self.atualizar_progresso(f"[bold red]❌ {erro_msg}[/bold red]")
             return False, erro_msg, [], 0.0
