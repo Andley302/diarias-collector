@@ -17,6 +17,7 @@ class DigitalizaDiaria(BasePortal):
         self.connection_lost = False
         self.total_empenhos = 0 
         self.total_meses = 0   
+        self.nome_completo_credor = None  #
     
     def countdown_retry(self, seconds, message):
         """Display a real-time countdown for retry attempts"""
@@ -267,6 +268,8 @@ class DigitalizaDiaria(BasePortal):
             
             valor_total = 0.0
             dados_diarias = []
+
+            search_name = self.nome_completo_credor if self.nome_completo_credor else credor_nome
             
             for row in rows[1:]:
                 colunas = row.find_all('td')
@@ -284,32 +287,66 @@ class DigitalizaDiaria(BasePortal):
                             
                         link_detalhe_url = link_detalhe['href']
                         
-                        credor_nome_normalizado = remover_acentos(credor_nome).lower()
+                        credor_nome_normalizado = remover_acentos(search_name).lower()
                         credor_tabela_normalizado = remover_acentos(credor_tabela).lower()
                         
                         if credor_nome_normalizado in credor_tabela_normalizado:
-                            self.atualizar_progresso(
-                                f"[cyan]🔍 Verificando a diária N°{numero_empenho}...[/cyan]",
-                                numero_empenho, data, self.total_empenhos, self.total_meses 
-                            )
+                            if not self.nome_completo_credor:
+                                self.nome_completo_credor = credor_tabela
+                                self.atualizar_progresso(
+                                    f"[bold blue]ℹ️ Usando o nome completo '{credor_tabela}' para o restante da busca.[/bold blue]",
+                                    None, None, self.total_empenhos, self.total_meses
+                                )
+                        
+
+                        if self.nome_completo_credor:
+                            if remover_acentos(self.nome_completo_credor).lower() == credor_tabela_normalizado:
+                                self.atualizar_progresso(
+                                    f"[cyan]🔍 Verificando a diária N°{numero_empenho}...[/cyan]",
+                                    numero_empenho, data, self.total_empenhos, self.total_meses 
+                                )
                                                         
-                            valor, dados_detalhados = self.extrair_dados_diaria(link_detalhe_url, credor_nome, numero_empenho, data, valor_bruto)
-                            
-                            if valor > 0:
-                                dados_diarias.append({
-                                    'Ano': ano,
-                                    'Mês': mes,
-                                    'Número do Empenho': numero_empenho,
-                                    'Data': dados_detalhados['Data'],
-                                    'Modalidade': dados_detalhados['Modalidade'],
-                                    'Credor': dados_detalhados['Credor'],
-                                    'Ordenador': dados_detalhados['Ordenador'],
-                                    'CPF do Ordenador': dados_detalhados['CPF do Ordenador'],
-                                    'Valor Bruto': dados_detalhados['Valor Bruto'],
-                                    'Descrição': dados_detalhados['Descrição'].upper(),
-                                    'Detalhes': link_detalhe_url
-                                })
-                                valor_total += valor
+                                valor, dados_detalhados = self.extrair_dados_diaria(link_detalhe_url, credor_nome, numero_empenho, data, valor_bruto)
+                                
+                                if valor > 0:
+                                    dados_diarias.append({
+                                        'Ano': ano,
+                                        'Mês': mes,
+                                        'Número do Empenho': numero_empenho,
+                                        'Data': dados_detalhados['Data'],
+                                        'Modalidade': dados_detalhados['Modalidade'],
+                                        'Credor': dados_detalhados['Credor'],
+                                        'Ordenador': dados_detalhados['Ordenador'],
+                                        'CPF do Ordenador': dados_detalhados['CPF do Ordenador'],
+                                        'Valor Bruto': dados_detalhados['Valor Bruto'],
+                                        'Descrição': dados_detalhados['Descrição'].upper(),
+                                        'Detalhes': link_detalhe_url
+                                    })
+                                    valor_total += valor
+                        else:
+                            if credor_nome_normalizado in credor_tabela_normalizado:
+                                self.atualizar_progresso(
+                                    f"[cyan]🔍 Verificando a diária N°{numero_empenho}...[/cyan]",
+                                    numero_empenho, data, self.total_empenhos, self.total_meses 
+                                )
+                                                        
+                                valor, dados_detalhados = self.extrair_dados_diaria(link_detalhe_url, credor_nome, numero_empenho, data, valor_bruto)
+                                
+                                if valor > 0:
+                                    dados_diarias.append({
+                                        'Ano': ano,
+                                        'Mês': mes,
+                                        'Número do Empenho': numero_empenho,
+                                        'Data': dados_detalhados['Data'],
+                                        'Modalidade': dados_detalhados['Modalidade'],
+                                        'Credor': dados_detalhados['Credor'],
+                                        'Ordenador': dados_detalhados['Ordenador'],
+                                        'CPF do Ordenador': dados_detalhados['CPF do Ordenador'],
+                                        'Valor Bruto': dados_detalhados['Valor Bruto'],
+                                        'Descrição': dados_detalhados['Descrição'].upper(),
+                                        'Detalhes': link_detalhe_url
+                                    })
+                                    valor_total += valor
                             
                     except Exception as e:
                         self.atualizar_progresso(f"[yellow]⚠️ Erro ao processar linha da tabela: {str(e)}[/yellow]")

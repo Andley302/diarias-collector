@@ -35,12 +35,14 @@ class DigitalizaEmpenho(BasePortal):
                 time.sleep(1)
                 progress.update(task, advance=1)
     
-    def buscar_diarias(self, url_base, ano_inicio, ano_fim, credor_nome, timeout):
+    def buscar_diarias(self, url_base, ano_inicio, ano_fim, credor_nome, timeout=30):
         valor_total = 0.0
         dados_empenhos = []
         
         self.total_empenhos = 0
         self.total_meses = 0
+        
+        self.nome_completo_credor = None
         
         connection_issues = {
             'dns_failures': 0,
@@ -303,191 +305,103 @@ class DigitalizaEmpenho(BasePortal):
         return 0.0, []
     
     def extrair_dados_empenho(self, url_empenho, credor_nome, timeout):
-        retry_count = 0
-        last_error = None
+        try:
+            response = requests.get(url_empenho, timeout=timeout)
         
-        while retry_count <= self.max_retries:
-            try:
-                response = requests.get(url_empenho, timeout=timeout)
-            
-                if response.status_code == 200:
-                    try:
-                        soup = BeautifulSoup(response.text, 'html.parser')
-                        numero_empenho_tag = soup.find('input', {'id': ''})
-                        numero_empenho = numero_empenho_tag['value'] if numero_empenho_tag else ''
-                        
-                        data_tag = soup.find('input', {'id': 'contratacao'})
-                        data = data_tag['value'] if data_tag else ''
-                        
-                        self.atualizar_progresso(
-                            f"[cyan]🔍 Verificando o empenho N°{numero_empenho}...[/cyan]", 
-                            numero_empenho,
-                            data,
-                            self.total_empenhos,
-                            self.total_meses 
-                        )
-                                        
-                        modalidade_tag = soup.find('input', {'id': 'modalidade'})
-                        modalidade = modalidade_tag['value'] if modalidade_tag else ''
-                        
-                        credor_tag = soup.find('input', {'id': 'credor'})
-                        credor = credor_tag['value'] if credor_tag else ''
-                        
-                        ordenador_tag = soup.find('input', {'id': 'ordenador'})
-                        ordenador = ordenador_tag['value'] if ordenador_tag else ''
-                        
-                        cpf_tag = soup.find('input', {'id': 'c_ordenador'})
-                        cpf = cpf_tag['value'] if cpf_tag else ''
-                        
-                        valor_bruto_tag = soup.find('input', {'id': 'valor'})
-                        valor_bruto = valor_bruto_tag['value'] if valor_bruto_tag else ''
-                        
-                        descricao_tag = soup.find('textarea', {'id': 'descricao'})
-                        descricao = descricao_tag.text.strip() if descricao_tag else ''
-                        
-                        valor_float = 0.0
-                        try:
-                            valor_bruto_clean = valor_bruto.replace("R$", "").replace(".", "").replace(",", ".").strip()
-                            valor_float = float(valor_bruto_clean)
-                        except ValueError:
-                            self.atualizar_progresso(f"[yellow]⚠️ Erro ao converter valor: {valor_bruto}[/yellow]")
-                        
-                        credor_nome_normalizado = remover_acentos(credor_nome).lower()
-                        credor_normalizado = remover_acentos(credor).lower()
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                numero_empenho_tag = soup.find('input', {'id': ''})
+                numero_empenho = numero_empenho_tag['value'] if numero_empenho_tag else ''
+                
+                data_tag = soup.find('input', {'id': 'contratacao'})
+                data = data_tag['value'] if data_tag else ''
+                
+                self.atualizar_progresso(
+                    f"[cyan]🔍 Verificando o empenho N°{numero_empenho}...[/cyan]", 
+                    numero_empenho,
+                    data,
+                    self.total_empenhos,
+                    self.total_meses 
+                )
+                                
+                modalidade_tag = soup.find('input', {'id': 'modalidade'})
+                modalidade = modalidade_tag['value'] if modalidade_tag else ''
+                
+                credor_tag = soup.find('input', {'id': 'credor'})
+                credor = credor_tag['value'] if credor_tag else ''
+                
+                ordenador_tag = soup.find('input', {'id': 'ordenador'})
+                ordenador = ordenador_tag['value'] if ordenador_tag else ''
+                
+                cpf_tag = soup.find('input', {'id': 'c_ordenador'})
+                cpf = cpf_tag['value'] if cpf_tag else ''
+                
+                valor_bruto_tag = soup.find('input', {'id': 'valor'})
+                valor_bruto = valor_bruto_tag['value'] if valor_bruto_tag else ''
+                
+                descricao_tag = soup.find('textarea', {'id': 'descricao'})
+                descricao = descricao_tag.text.strip() if descricao_tag else ''
+                
+                valor_float = 0.0
+                try:
+                    valor_bruto_clean = valor_bruto.replace("R$", "").replace(".", "").replace(",", ".").strip()
+                    valor_float = float(valor_bruto_clean)
+                except ValueError:
+                    self.atualizar_progresso(f"[yellow]⚠️ Erro ao converter valor: {valor_bruto}[/yellow]")
+                
+                search_name = self.nome_completo_credor if self.nome_completo_credor else credor_nome
+                
+                credor_nome_normalizado = remover_acentos(search_name).lower()
+                credor_normalizado = remover_acentos(credor).lower()
 
-                        if credor_nome_normalizado in credor_normalizado:
-                            self.atualizar_progresso(
-                                f"[bold green]✅ Diária de Viagem para {credor} no empenho N°{numero_empenho} "
-                                f"no dia {data} no valor de {valor_bruto}.[/bold green]"
-                            )
+                if not self.nome_completo_credor and credor_nome_normalizado in credor_normalizado:
+                    self.nome_completo_credor = credor
+                    self.atualizar_progresso(
+                        f"[bold blue]ℹ️ Usando o nome completo '{credor}' para o restante da busca.[/bold blue]",
+                        None, None, self.total_empenhos, self.total_meses
+                    )
+                
+                process_this_empenho = False
+                if self.nome_completo_credor:
+                    if remover_acentos(self.nome_completo_credor).lower() == credor_normalizado:
+                        process_this_empenho = True
+                else:
+                    if credor_nome_normalizado in credor_normalizado:
+                        process_this_empenho = True
+                
+                if process_this_empenho:
+                    self.atualizar_progresso(
+                        f"[bold green]✅ Diária de Viagem para {credor} no empenho N°{numero_empenho} "
+                        f"no dia {data} no valor de {valor_bruto}.[/bold green]"
+                    )
 
-                            cidades = carregar_ou_criar_cidades()
-                            descricao_sem_acento = remover_acentos(descricao).lower()
-                            cidade_encontrada = None
+                    cidades = carregar_ou_criar_cidades()
+                    descricao_sem_acento = remover_acentos(descricao).lower()
+                    cidade_encontrada = None
 
-                            for cidade in cidades:
-                                if cidade.lower() in descricao_sem_acento:
-                                    cidade_encontrada = cidade
-                                    break
-
-                            if cidade_encontrada:
-                                descricao = f"VIAGEM A {cidade_encontrada}"
-                            else:
-                                descricao = "VIAGEM A LOCAL NÃO INFORMADO"
-
-                            dados = {
-                                'Número do Empenho': numero_empenho,
-                                'Data': data,
-                                'Modalidade': modalidade,
-                                'Credor': credor,
-                                'Ordenador': ordenador,
-                                'CPF do Ordenador': cpf,
-                                'Valor Bruto': valor_bruto,
-                                'Descrição': descricao
-                            }
-                            return valor_float, dados
-                        
-                        return 0.0, {}
-                        
-                    except Exception as e:
-                        error_str = str(e)
-                        if error_str != last_error:
-                            last_error = error_str
-                            self.atualizar_progresso(f"[bold red]❌ Erro ao processar HTML do empenho: {error_str}[/bold red]")
-                        
-                        if retry_count < self.max_retries:
-                            delay = self.retry_delays[retry_count]
-                            self.atualizar_progresso(
-                                f"[bold yellow]⚠️ Tentativa {retry_count+1}/{self.max_retries+1} em {delay} segundos...[/bold yellow]"
-                            )
-                            time.sleep(delay)
-                            retry_count += 1
-                            continue
-                        else:
+                    for cidade in cidades:
+                        if cidade.lower() in descricao_sem_acento:
+                            cidade_encontrada = cidade
                             break
-                    
-                elif response.status_code in [429, 503]: 
-                    if retry_count < self.max_retries:
-                        delay = self.retry_delays[retry_count]
-                        self.atualizar_progresso(
-                            f"[bold yellow]⚠️ Servidor sobrecarregado (HTTP {response.status_code}). "
-                            f"Nova tentativa em {delay} segundos...[/bold yellow]"
-                        )
-                        time.sleep(delay)
-                        retry_count += 1
-                        continue
+
+                    if cidade_encontrada:
+                        descricao = f"VIAGEM A {cidade_encontrada}"
                     else:
-                        self.atualizar_progresso(
-                            f"[bold red]❌ Erro HTTP {response.status_code} após {self.max_retries} tentativas.[/bold red]"
-                        )
-                        break
-                else:
-                    self.atualizar_progresso(
-                        f"[bold red]❌ Erro HTTP {response.status_code} ao acessar empenho.[/bold red]"
-                    )
-                    break
-                    
-            except requests.exceptions.ConnectionError as e:
-                if "NameResolutionError" in str(e):
-                    error_type = "DNS"
-                    error_detail = "Não foi possível resolver o nome do servidor"
-                else:
-                    error_type = "Conexão"
-                    error_detail = "Falha na conexão com o servidor"
-                
-                # Only show error if it's different from the last one
-                error_str = str(e)
-                if error_str != last_error:
-                    last_error = error_str
-                    self.atualizar_progresso(
-                        f"[bold red]❌ Erro de {error_type}: {error_detail}[/bold red]"
-                    )
-                
-                if retry_count < self.max_retries:
-                    delay = self.retry_delays[retry_count]
-                    self.atualizar_progresso(
-                        f"[bold yellow]⚠️ Tentativa {retry_count+1}/{self.max_retries+1} em {delay} segundos...[/bold yellow]"
-                    )
-                    time.sleep(delay)
-                    retry_count += 1
-                    continue
-                else:
-                    error_message = f"Falha de {error_type} após {self.max_retries+1} tentativas."
-                    self.atualizar_progresso(f"[bold red]❌ {error_message}[/bold red]")
-                    raise ConnectionError(f"Erro crítico de conexão: {error_message}")
+                        descricao = "VIAGEM A LOCAL NÃO INFORMADO"
 
-            except requests.exceptions.Timeout:
-                if retry_count < self.max_retries:
-                    delay = self.retry_delays[retry_count]
-                    self.atualizar_progresso(
-                      f"[bold yellow]⚠️ Timeout ao acessar empenho. Nova tentativa em {delay} segundos...[/bold yellow]"
-                    )
-
-                    time.sleep(delay)
-                    retry_count += 1
-                    continue
-                else:
-                    self.atualizar_progresso(
-                        f"[bold red]❌ Tempo limite excedido após {self.max_retries+1} tentativas.[/bold red]"
-                    )
-                    break
-                    
-            except Exception as e:
-                error_str = str(e)
-                if error_str != last_error:
-                    last_error = error_str
-                    self.atualizar_progresso(f"[bold red]❌ Erro ao processar empenho: {error_str}[/bold red]")
-                
-                if retry_count < self.max_retries:
-                    delay = self.retry_delays[retry_count]
-                    self.atualizar_progresso(
-                        f"[bold yellow]⚠️ Tentativa {retry_count+1}/{self.max_retries+1} em {delay} segundos...[/bold yellow]"
-                    )
-                    time.sleep(delay)
-                    retry_count += 1
-                    continue
-                else:
-                    break
+                    dados = {
+                        'Número do Empenho': numero_empenho,
+                        'Data': data,
+                        'Modalidade': modalidade,
+                        'Credor': credor,
+                        'Ordenador': ordenador,
+                        'CPF do Ordenador': cpf,
+                        'Valor Bruto': valor_bruto,
+                        'Descrição': descricao
+                    }
+                    return valor_float, dados
+        except Exception as e:
+            self.atualizar_progresso(f"[bold red]❌ Erro ao processar empenho {url_empenho}: {str(e)}[/bold red]")
         
         return 0.0, {}
         
