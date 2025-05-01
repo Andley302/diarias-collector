@@ -390,7 +390,7 @@ class DigitalizaEmpenho(BasePortal):
                         else:
                             break
                     
-                elif response.status_code in [429, 503]:  # Rate limit or service unavailable
+                elif response.status_code in [429, 503]: 
                     if retry_count < self.max_retries:
                         delay = self.retry_delays[retry_count]
                         self.atualizar_progresso(
