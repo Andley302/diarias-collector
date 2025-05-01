@@ -435,7 +435,7 @@ class ProgressScreen(QWidget):
         self.log_text.clear()
 
         self.empenho_label.setText(
-            f"<br><b><font color='green'>Iniciando Busca...</font></b><br>"
+            f"<br><b><font color='blue'>Iniciando Busca...</font></b><br>"
         )
 
         verbose = self.settings.value("verbose", False, type=bool)
@@ -475,7 +475,7 @@ class ProgressScreen(QWidget):
                     color = 'orange'
                     time_estimate = 'vários minutos a horas'
             
-            empenho_info = f"<br><b>Número do empenho: {empenho}</b>"
+            empenho_info = f"<br><b>Empenho N°{empenho}</b>"
             if data:
                 empenho_info += f"<br><b>Data: {data}</b>"
             
@@ -494,7 +494,7 @@ class ProgressScreen(QWidget):
                 )
 
                 if total_info:
-                    wait_message += f"<br><br><small><i>{total_info}</i></small><br>"
+                    wait_message += f"<br><br><small><i>Processando {total_info}</i></small><br>"
 
             
             self.empenho_label.setText(f"{empenho_info}<br>{wait_message}")
