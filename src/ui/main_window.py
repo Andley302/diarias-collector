@@ -661,7 +661,7 @@ class MainWindow(QMainWindow):
     
       if os.path.exists(caminho_absoluto):
           url = QUrl.fromLocalFile(caminho_absoluto)
-          print(f"🌎 Abrindo PDF no navegador: {url.toString()")
+          print(f"🌎 Abrindo PDF no navegador: {url.toString()}")
 
           QDesktopServices.openUrl(url)
       else:
