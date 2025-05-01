@@ -90,10 +90,14 @@ class DiariasCollector:
         modelo_portal = orgao_config.get('modelo_portal', '').lower()
         metodo_busca = orgao_config.get('metodo_busca', '').lower()
         url_base = orgao_config.get('url_base', '')
-        timeout = orgao_config.get('timeout', 7)
-
-        if timeout <= 0:
+        
+        try:
+            timeout = int(orgao_config.get('timeout', 7))
+            if timeout <= 0:
+                timeout = 7
+        except (ValueError, TypeError):
             timeout = 7
+
         
         if not modelo_portal or not metodo_busca or not url_base:
             self.atualizar_progresso(f"[bold red]❌ Configuração incompleta para o órgão '{orgao}'.[/bold red]")
