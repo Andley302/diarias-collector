@@ -35,7 +35,7 @@ class DigitalizaDiaria(BasePortal):
                 time.sleep(1)
                 progress.update(task, advance=1)
     
-    def buscar_diarias(self, url_base, ano_inicio, ano_fim, credor_nome, timeout=30):
+    def buscar_diarias(self, url_base, ano_inicio, ano_fim, credor_nome, timeout):
         valor_total = 0.0
         dados_empenhos = []
         
