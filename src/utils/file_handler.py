@@ -186,10 +186,14 @@ def save_to_pdf(dados_empenhos, valor_total, credor_nome, ano_inicio, ano_fim, c
             data = [colunas]
 
             for emp in dados_empenhos:
+                ordenador = emp.get('Ordenador', '')
+                if not ordenador or ordenador.strip() == '' or ordenador is None:
+                    ordenador = 'Não Informado'
+                
                 data.append([
                     emp['Data'],
                     f"N°{emp['Número do Empenho']}",
-                    Paragraph(emp['Ordenador'], normal_style),
+                    Paragraph(ordenador, normal_style),
                     Paragraph(emp['Descrição'], normal_style),
                     Paragraph(emp['Valor Bruto'], normal_style),
                     Paragraph(f'<link href="{emp["Detalhes"]}">{emp["Detalhes"]}</link>', centered_style_table)
@@ -255,6 +259,10 @@ def save_to_excel(dados_empenhos, credor_nome="CREDOR", ano_inicio="XXXX", ano_f
         caminho_arquivo = os.path.join(pasta_destino, nome_arquivo)
 
         df = pd.DataFrame(dados_empenhos)
+
+        if 'Ordenador' in df.columns:
+            df['Ordenador'] = df['Ordenador'].fillna('Não Informado')
+            df['Ordenador'] = df['Ordenador'].apply(lambda x: 'Não Informado' if not x or str(x).strip() == '' else x)
 
         if 'Valor Bruto' not in df.columns:
             print("Coluna 'Valor Bruto' não encontrada.")

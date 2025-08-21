@@ -367,41 +367,63 @@ class DigitalizaDiaria(BasePortal):
                     soup = BeautifulSoup(response.text, 'html.parser')
                     
                     credor = None
-                    credor_tags = soup.find_all(['input', 'p', 'div', 'span', 'td'], 
-                                              id=lambda x: x and ('credor' in x.lower() if x else False))
+                    credor_input = soup.find('input', id='credor')
+                    if credor_input and credor_input.get('value'):
+                        credor = credor_input.get('value').strip()
                     
-                    if not credor_tags:
-                        credor_tags = soup.find_all(text=lambda t: t and ('credor' in t.lower() or 'beneficiário' in t.lower()))
-                    
-                    for tag in credor_tags:
-                        if hasattr(tag, 'value') and tag.get('value'):
-                            credor = tag.get('value').strip()
-                            break
-                        elif hasattr(tag, 'find_next'):
-                            next_elem = tag.find_next()
-                            if next_elem and next_elem.text.strip():
-                                credor = next_elem.text.strip()
+                    if not credor:
+                        credor_tags = soup.find_all(['input', 'p', 'div', 'span', 'td'], 
+                                                  id=lambda x: x and ('credor' in x.lower() if x else False))
+                        
+                        for tag in credor_tags:
+                            if hasattr(tag, 'value') and tag.get('value'):
+                                credor = tag.get('value').strip()
                                 break
+                            elif hasattr(tag, 'find_next'):
+                                next_elem = tag.find_next()
+                                if next_elem and next_elem.text.strip():
+                                    credor = next_elem.text.strip()
+                                    break
+                    
+                    if not credor:
+                        credor_tags = soup.find_all(text=lambda t: t and ('credor' in t.lower() or 'beneficiário' in t.lower()))
+                        for tag in credor_tags:
+                            if hasattr(tag, 'find_next'):
+                                next_elem = tag.find_next()
+                                if next_elem and next_elem.text.strip():
+                                    credor = next_elem.text.strip()
+                                    break
                     
                     if not credor:
                         credor = credor_nome
                     
                     ordenador = "Não Informado"
-                    ordenador_tags = soup.find_all(['input', 'p', 'div', 'span', 'td'], 
-                                                 id=lambda x: x and ('ordenador' in x.lower() if x else False))
+                    ordenador_input = soup.find('input', id=lambda x: x and ('ordenador' in x.lower() if x else False))
+                    if ordenador_input and ordenador_input.get('value'):
+                        ordenador = ordenador_input.get('value').strip()
                     
-                    if not ordenador_tags:
-                        ordenador_tags = soup.find_all(text=lambda t: t and ('ordenador' in t.lower() or 'autorizado por' in t.lower()))
-                    
-                    for tag in ordenador_tags:
-                        if hasattr(tag, 'value') and tag.get('value'):
-                            ordenador = tag.get('value').strip()
-                            break
-                        elif hasattr(tag, 'find_next'):
-                            next_elem = tag.find_next()
-                            if next_elem and next_elem.text.strip():
-                                ordenador = next_elem.text.strip()
+                    if ordenador == "Não Informado":
+                        ordenador_tags = soup.find_all(['input', 'p', 'div', 'span', 'td'], 
+                                                     id=lambda x: x and ('ordenador' in x.lower() if x else False))
+                        
+                        for tag in ordenador_tags:
+                            if hasattr(tag, 'value') and tag.get('value'):
+                                ordenador = tag.get('value').strip()
                                 break
+                            elif hasattr(tag, 'find_next'):
+                                next_elem = tag.find_next()
+                                if next_elem and next_elem.text.strip():
+                                    ordenador = next_elem.text.strip()
+                                    break
+                    
+                    if ordenador == "Não Informado":
+                        ordenador_tags = soup.find_all(text=lambda t: t and ('ordenador' in t.lower() or 'autorizado por' in t.lower()))
+                        for tag in ordenador_tags:
+                            if hasattr(tag, 'find_next'):
+                                next_elem = tag.find_next()
+                                if next_elem and next_elem.text.strip():
+                                    ordenador = next_elem.text.strip()
+                                    break
                     
                     cpf = "Não Informado"
                     cpf_tags = soup.find_all(['input', 'p', 'div', 'span', 'td'], 
